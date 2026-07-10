@@ -1,0 +1,20 @@
+/*
+Theme Name: StanRay Custom
+Theme URI: https://yoursite.com
+Author: Your Name
+Author URI: https://yoursite.com
+Description: A clean, editorial custom WooCommerce theme inspired by Stan Ray. Minimal, fashion-forward, fully custom — no page builder, no bloat.
+Version: 1.0.0
+Requires at least: 6.0
+Tested up to: 6.5
+Requires PHP: 8.0
+License: GNU General Public License v2 or later
+License URI: LICENSE
+Text Domain: stanray-custom
+Tags: woocommerce, custom, minimal, fashion, ecommerce
+*/
+
+/* This file is intentionally left minimal.
+   All styles are loaded via functions.php from /assets/css/
+   See: assets/css/main.css for global styles
+*/
