@@ -1075,3 +1075,96 @@ document.addEventListener('DOMContentLoaded', function () {
         toggle.querySelector('.stanray-toggle-password__icon-eye-off').hidden = !isHidden;
     });
 })();
+
+// ── CHECKOUT ADDRESS PICKER ───────────────────────────────────────────────────
+// Picking a saved card only fills the same billing_*/shipping_* inputs core's
+// own checkout form already renders — submission is untouched. Uses jQuery
+// (not vanilla DOM events) because core's country-select.js listens for
+// jQuery 'change' on #billing_country/#shipping_country to rebuild the state
+// field, and re-inits select2 on it itself; triggering that reliably needs
+// jQuery's own event dispatch, not a native dispatchEvent.
+jQuery(function($) {
+
+    function fieldsContainer(type) {
+        return type === 'billing' ? $('.woocommerce-billing-fields') : $('div.shipping_address');
+    }
+
+    function cardData($card) {
+        var data = {};
+        $.each($card.get(0).attributes, function(_, attr) {
+            if (attr.name.indexOf('data-') === 0) {
+                data[attr.name.slice(5).replace(/-/g, '_')] = attr.value;
+            }
+        });
+        return data;
+    }
+
+    function fillFromCard(type, $card) {
+        var prefix = type + '_';
+        var data = cardData($card);
+
+        // Country must be set (and its change event fired) before the state
+        // field — core's country-select.js replaces that field's DOM node
+        // synchronously on country change, so anything set on it beforehand
+        // would be wiped out.
+        if (data.country) {
+            $('#' + prefix + 'country').val(data.country).trigger('change');
+        }
+        $.each(data, function(key, value) {
+            if (key === 'country') return;
+            var $field = $('#' + prefix + key);
+            if (!$field.length) return;
+            $field.val(value);
+            if (key === 'state') $field.trigger('change');
+        });
+    }
+
+    function setManualFieldsVisible(type, visible) {
+        // A CSS class + !important (not .toggle()/.hide(), which set inline
+        // display) — core's address-i18n.js re-shows locale-dependent fields
+        // (address_1/city/state/postcode) via its own inline style whenever
+        // the country field's 'change' event fires, which fillFromCard()
+        // below deliberately triggers. An inline .hide() loses that fight;
+        // a stylesheet !important on the container doesn't.
+        fieldsContainer(type).toggleClass('address-picker-active', ! visible);
+        var $saveToggle = fieldsContainer(type).find('.address-picker__save-toggle');
+        $saveToggle.toggle(visible);
+        if (!visible) $saveToggle.find('input[type="checkbox"]').prop('checked', false);
+    }
+
+    function applyPickerSelection(type) {
+        var $picker = fieldsContainer(type).find('.address-picker');
+        if (!$picker.length) return;
+
+        var $checked = $picker.find('input[type="radio"]:checked');
+        $picker.find('.address-picker__card').removeClass('is-selected');
+        $checked.closest('.address-picker__card').addClass('is-selected');
+
+        if ($checked.val() === 'new') {
+            setManualFieldsVisible(type, true);
+        } else if ($checked.length) {
+            setManualFieldsVisible(type, false);
+            fillFromCard(type, $checked);
+        }
+    }
+
+    function initPickers() {
+        ['billing', 'shipping'].forEach(function(type) {
+            applyPickerSelection(type);
+        });
+    }
+
+    $(document.body).on('change', '.address-picker input[type="radio"]', function() {
+        var type = $(this).closest('.address-picker').data('type');
+        applyPickerSelection(type);
+    });
+
+    initPickers();
+
+    // Browser back/forward can restore this page from bfcache with our last
+    // DOM state but without re-running init — re-apply it so the picker
+    // never shows stale selection/visibility.
+    window.addEventListener('pageshow', function(e) {
+        if (e.persisted) initPickers();
+    });
+});

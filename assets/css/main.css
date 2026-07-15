@@ -2525,6 +2525,75 @@ justify-content: space-between;
     margin: var(--space-24) var(--space-24) 0;
 }
 
+/* ── CHECKOUT ADDRESS PICKER ────────────────────────────────── */
+.address-picker {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: var(--space-md);
+    margin-bottom: var(--space-24);
+}
+.address-picker__card {
+    position: relative;
+    display: block;
+    padding: var(--space-md);
+    border: 1px solid var(--color-gray-200);
+    background: var(--color-white);
+    cursor: pointer;
+    transition: border-color var(--transition-fast);
+}
+.address-picker__card:hover { border-color: var(--color-gray-400); }
+.address-picker__card.is-selected { border-color: var(--color-black); }
+.address-picker__card input[type="radio"] {
+    position: absolute;
+    top: var(--space-md);
+    right: var(--space-md);
+    accent-color: var(--color-black);
+}
+.address-picker__label {
+    display: block;
+    font-weight: 500;
+    font-size: var(--font-size-sm);
+    margin-bottom: var(--space-xs);
+    padding-right: var(--space-lg);
+}
+.address-picker__default-tag {
+    font-style: normal;
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--color-gray-600);
+}
+.address-picker__preview {
+    display: block;
+    font-size: var(--font-size-xs);
+    color: var(--color-gray-600);
+    line-height: 1.6;
+}
+.address-picker__card--new {
+    display: flex;
+    align-items: center;
+    min-height: 60px;
+}
+.address-picker__card--new .address-picker__label { margin-bottom: 0; padding-right: 0; }
+.address-picker__save-toggle {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: var(--font-size-sm);
+    color: var(--color-gray-600);
+    cursor: pointer;
+    margin-bottom: var(--space-md);
+}
+.address-picker__save-toggle input { accent-color: var(--color-black); }
+
+/* A saved card is selected — hide core's manual field rows. !important:
+   core's own address-i18n.js sets an inline display style on address_1/
+   city/state/postcode whenever the country field's 'change' event fires
+   (which selecting a card triggers, to make the state dropdown rebuild
+   correctly) — a plain class-based display:none loses that fight, this
+   doesn't. */
+.address-picker-active .form-row { display: none !important; }
+
 /* ── ANNOUNCEMENT BAR (force it always visible) ──────────────── */
 .announcement-bar { display: block !important; }
 

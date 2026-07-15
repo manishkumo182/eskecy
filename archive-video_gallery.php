@@ -26,18 +26,27 @@ $tour_dates = new WP_Query([
 <div class="video-gallery-page">
 
     <!-- HERO -->
-    <section class="hero" aria-label="In Concert">
+    <?php
+    $eh_video_id = get_option( 'stanray_eh_video_id', 0 );
+    $eh_video    = $eh_video_id ? wp_get_attachment_url( $eh_video_id ) : get_template_directory_uri() . '/assets/videos/SKC-Live-Web-Banner-.mp4';
+    $eh_eyebrow  = get_option( 'stanray_eh_eyebrow', 'Live · Events' );
+    $eh_headline = get_option( 'stanray_eh_headline', 'In Concert' );
+    $eh_subtext  = get_option( 'stanray_eh_subtext', 'Catch every show, every stage, every moment — live and on video.' );
+    $eh_cta_text = get_option( 'stanray_eh_cta_text', 'New Dates Added' );
+    $eh_cta_link = get_option( 'stanray_eh_cta_link', '#tour-dates' );
+    ?>
+    <section class="hero" aria-label="<?php echo esc_attr( $eh_headline ); ?>">
         <div class="hero__media">
             <video class="hero__video" autoplay muted loop playsinline>
-                <source src="<?php echo esc_url( get_template_directory_uri() . '/assets/videos/SKC-Live-Web-Banner-.mp4' ); ?>" type="video/mp4">
+                <source src="<?php echo esc_url( $eh_video ); ?>" type="video/mp4">
             </video>
             <div class="hero__overlay"></div>
         </div>
         <div class="hero__content">
-            <p class="hero__eyebrow eyebrow">Live &middot; Events</p>
-            <h1 class="hero__headline">In Concert</h1>
-            <p class="hero__subtext">Catch every show, every stage, every moment — live and on video.</p>
-            <a href="#tour-dates" class="btn btn--outline-white hero__cta">New Dates Added</a>
+            <p class="hero__eyebrow eyebrow"><?php echo esc_html( $eh_eyebrow ); ?></p>
+            <h1 class="hero__headline"><?php echo esc_html( $eh_headline ); ?></h1>
+            <p class="hero__subtext"><?php echo esc_html( $eh_subtext ); ?></p>
+            <a href="<?php echo esc_url( $eh_cta_link ); ?>" class="btn btn--outline-white hero__cta"><?php echo esc_html( $eh_cta_text ); ?></a>
         </div>
     </section>
 

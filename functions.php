@@ -201,10 +201,12 @@ require_once STANRAY_DIR . '/inc/admin-hero-banner.php';
 require_once STANRAY_DIR . '/inc/admin-select-style.php';
 require_once STANRAY_DIR . '/inc/admin-shop-the-look.php';
 require_once STANRAY_DIR . '/inc/admin-homepage-video.php';
+require_once STANRAY_DIR . '/inc/admin-events-hero.php';
 require_once STANRAY_DIR . '/inc/gateway-qr-payment.php';
 require_once STANRAY_DIR . '/inc/notify-payment-success.php';
 require_once STANRAY_DIR . '/inc/post-purchase-review.php';
 require_once STANRAY_DIR . '/inc/wishlist-login-modal.php';
+require_once STANRAY_DIR . '/inc/address-book.php';
 
 
 // ─── BODY CLASSES ─────────────────────────────────────────────────────────────
@@ -905,6 +907,22 @@ add_action( 'add_meta_boxes', function() {
         'normal',
         'high'
     );
+} );
+
+// ─── ADDRESS BOOK CPT ───────────────────────────────────────────────────────
+// One post per saved billing/shipping address. Customer PII, not store content
+// like eskecy_review above — no admin UI, no public queryability. See
+// inc/address-book.php for everything else (CRUD, endpoints, checkout picker).
+add_action( 'init', function() {
+    register_post_type( 'stanray_address', [
+        'labels'        => [ 'name' => 'Saved Addresses', 'singular_name' => 'Saved Address' ],
+        'public'        => false,
+        'show_ui'       => false,
+        'show_in_menu'  => false,
+        'supports'      => [ 'title' ],
+        'rewrite'       => false,
+        'capability_type' => 'post',
+    ] );
 } );
 
 function stanray_review_meta_callback( $post ) {

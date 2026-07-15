@@ -172,6 +172,18 @@
     border-color: #c9d1d93d;
     color: #000;
 }
+/* page.php's inline `.page-body a { color: var(--color-black); }` (specificity
+   0,0,1,1) wraps the My Account page and outranks .stanray-btn alone
+   (0,0,1,0) — every .stanray-btn under .page-body needs this reasserted per
+   variant, or it renders black-on-black (this affects any pre-existing
+   .stanray-btn in My Account, not just the address book). */
+.page-body a.stanray-btn { color: var(--color-white); }
+.page-body a.stanray-btn:hover { color: #000; }
+.page-body a.stanray-btn--outline { color: var(--color-black); }
+.page-body a.stanray-btn--outline:hover { color: var(--color-white); }
+.page-body a.stanray-btn--ghost { color: var(--color-gray-600); }
+.page-body a.stanray-btn--ghost:hover { color: var(--color-black); }
+.page-body a.stanray-btn--primary { color: var(--color-black); }
 
 .stanray-btn--full { width: 100%; }
 
@@ -883,7 +895,7 @@
     margin-bottom: var(--space-sm);
 }
 
-.woocommerce-address-fields input,
+.woocommerce-address-fields input:not([type="checkbox"]):not([type="radio"]),
 .woocommerce-address-fields select,
 .woocommerce-address-fields textarea {
     width: 100%;
@@ -898,6 +910,20 @@
     transition: border-color var(--transition-fast);
     -webkit-appearance: none;
     appearance: none;
+}
+/* .stanray-checkbox ("Set as default") sits inside .woocommerce-address-fields
+   — reassert its own sizing since the rule above still wins on specificity
+   for anything not explicitly excluded. */
+.woocommerce-address-fields .stanray-checkbox {
+    display: flex;
+    margin-bottom: var(--space-20);
+}
+.woocommerce-address-fields .stanray-checkbox input {
+    width: auto;
+    padding: 0;
+    border: 1px solid var(--color-gray-400);
+    appearance: auto;
+    -webkit-appearance: auto;
 }
 
 .woocommerce-address-fields input:focus,
