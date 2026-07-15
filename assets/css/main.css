@@ -198,7 +198,7 @@ a.btn.btn--primary.order-action:hover {
 /* ── SITE HEADER — Floating Pill ─────────────────────────────── */
 .site-header {
     position: fixed;
-    top: 44px;
+    top: 25px;
     left: 0;
     right: 0;
     z-index: var(--z-header);
