@@ -7,7 +7,7 @@
 if ( ! defined( 'ABSPATH' ) ) exit;
 
 // ─── THEME CONSTANTS ──────────────────────────────────────────────────────────
-define( 'STANRAY_VERSION', '1.0.1' );
+define( 'STANRAY_VERSION', '1.0.4' );
 define( 'STANRAY_DIR', get_template_directory() );
 define( 'STANRAY_URI', get_template_directory_uri() );
 
@@ -86,8 +86,9 @@ function stanray_enqueue_assets() {
         wp_enqueue_style( 'stanray-woo', STANRAY_URI . '/assets/css/woocommerce.css', [ 'stanray-main' ], STANRAY_VERSION );
     }
 
-    // Account CSS — only on account pages
-    if ( is_account_page() ) {
+    // Account CSS — on account pages, and everywhere for guests (powers the
+    // wishlist login modal, which reuses the same Login/Register markup).
+    if ( is_account_page() || ! is_user_logged_in() ) {
         wp_enqueue_style( 'stanray-account', STANRAY_URI . '/assets/css/account.css', [ 'stanray-main' ], STANRAY_VERSION );
     }
 
@@ -101,10 +102,11 @@ function stanray_enqueue_assets() {
 
     // Pass data to JS
     wp_localize_script( 'stanray-main', 'stanrayData', [
-        'ajaxUrl'  => admin_url( 'admin-ajax.php' ),
-        'nonce'    => wp_create_nonce( 'stanray_nonce' ),
-        'cartUrl'  => function_exists( 'wc_get_cart_url' ) ? wc_get_cart_url() : home_url( '/cart' ),
-        'currency' => function_exists( 'get_woocommerce_currency_symbol' ) ? get_woocommerce_currency_symbol() : '$',
+        'ajaxUrl'    => admin_url( 'admin-ajax.php' ),
+        'nonce'      => wp_create_nonce( 'stanray_nonce' ),
+        'cartUrl'    => function_exists( 'wc_get_cart_url' ) ? wc_get_cart_url() : home_url( '/cart' ),
+        'currency'   => function_exists( 'get_woocommerce_currency_symbol' ) ? get_woocommerce_currency_symbol() : '$',
+        'isLoggedIn' => is_user_logged_in(),
     ] );
 
     // Comment reply
@@ -201,6 +203,8 @@ require_once STANRAY_DIR . '/inc/admin-shop-the-look.php';
 require_once STANRAY_DIR . '/inc/admin-homepage-video.php';
 require_once STANRAY_DIR . '/inc/gateway-qr-payment.php';
 require_once STANRAY_DIR . '/inc/notify-payment-success.php';
+require_once STANRAY_DIR . '/inc/post-purchase-review.php';
+require_once STANRAY_DIR . '/inc/wishlist-login-modal.php';
 
 
 // ─── BODY CLASSES ─────────────────────────────────────────────────────────────

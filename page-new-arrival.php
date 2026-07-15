@@ -160,16 +160,6 @@ get_header();
             ?>
         </div>
 
-        <!-- ✅ PAGINATION -->
-        <div class="pagination">
-            <?php
-            echo paginate_links(array(
-                'total' => $loop->max_num_pages,
-                'current' => $paged,
-            ));
-            ?>
-        </div>
-
         <?php wp_reset_postdata(); ?>
 
     </div>

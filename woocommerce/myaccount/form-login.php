@@ -43,14 +43,26 @@ do_action( 'woocommerce_before_customer_login_form' );
 
                 <div class="stanray-field">
                     <label for="password"><?php esc_html_e( 'Password', 'woocommerce' ); ?></label>
-                    <input
-                        type="password"
-                        class="stanray-input"
-                        name="password"
-                        id="password"
-                        autocomplete="current-password"
-                        placeholder="••••••••"
-                    >
+                    <div class="stanray-input-wrap">
+                        <input
+                            type="password"
+                            class="stanray-input"
+                            name="password"
+                            id="password"
+                            autocomplete="current-password"
+                            placeholder="••••••••"
+                        >
+                        <button type="button" class="stanray-toggle-password" data-target="password" aria-label="<?php esc_attr_e( 'Show password', 'woocommerce' ); ?>" aria-pressed="false">
+                            <svg class="stanray-toggle-password__icon-eye" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7Z"></path>
+                                <circle cx="12" cy="12" r="3"></circle>
+                            </svg>
+                            <svg class="stanray-toggle-password__icon-eye-off" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" hidden>
+                                <path d="M17.94 17.94A10.94 10.94 0 0 1 12 20c-7 0-11-8-11-8a20.4 20.4 0 0 1 5.06-6.06M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a20.4 20.4 0 0 1-3.29 4.55M14.12 14.12a3 3 0 1 1-4.24-4.24"></path>
+                                <path d="M1 1l22 22"></path>
+                            </svg>
+                        </button>
+                    </div>
                 </div>
 
                 <div class="stanray-field stanray-field--row">

@@ -21,25 +21,38 @@
     const searchField  = searchBar ? searchBar.querySelector('.search-field') : null;
 
     if (searchToggle && searchBar) {
+        const closeSearch = (returnFocus) => {
+            searchBar.setAttribute('hidden', '');
+            searchToggle.setAttribute('aria-expanded', 'false');
+            if (returnFocus) searchToggle.focus();
+        };
+        const openSearch = () => {
+            searchBar.removeAttribute('hidden');
+            searchToggle.setAttribute('aria-expanded', 'true');
+            if (searchField) searchField.focus();
+        };
+
         searchToggle.addEventListener('click', () => {
             const isOpen = searchBar.hasAttribute('hidden') === false;
             if (isOpen) {
-                searchBar.setAttribute('hidden', '');
-                searchToggle.setAttribute('aria-expanded', 'false');
+                closeSearch(false);
             } else {
-                searchBar.removeAttribute('hidden');
-                searchToggle.setAttribute('aria-expanded', 'true');
-                if (searchField) searchField.focus();
+                openSearch();
             }
         });
 
         // Close on Escape
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape' && !searchBar.hasAttribute('hidden')) {
-                searchBar.setAttribute('hidden', '');
-                searchToggle.setAttribute('aria-expanded', 'false');
-                searchToggle.focus();
+                closeSearch(true);
             }
+        });
+
+        // Close when clicking outside the search bar / toggle
+        document.addEventListener('click', (e) => {
+            if (searchBar.hasAttribute('hidden')) return;
+            if (searchBar.contains(e.target) || searchToggle.contains(e.target)) return;
+            closeSearch(false);
         });
     }
 
@@ -416,6 +429,105 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 })();
 
+// ── POST-PURCHASE REVIEW MODAL ────────────────────────────────────────────────
+(function() {
+    document.addEventListener('DOMContentLoaded', function() {
+        var modal = document.getElementById('review-popup-modal');
+        if (!modal) return;
+
+        var overlay  = document.getElementById('review-popup-overlay');
+        var closeBtn = document.getElementById('review-popup-close');
+        var skipBtn  = document.getElementById('review-popup-skip');
+        var form     = document.getElementById('review-popup-form');
+        var stars    = modal.querySelectorAll('.review-popup-star');
+        var starsWrap = modal.querySelector('.review-popup-modal__stars');
+        var errorEl  = document.getElementById('review-popup-error');
+        var rating   = 0;
+        var dismissed = false;
+
+        document.body.style.overflow = 'hidden';
+
+        function closeModal() {
+            modal.classList.remove('is-open');
+            document.body.style.overflow = '';
+            setTimeout(function() { if (modal.parentNode) modal.parentNode.removeChild(modal); }, 200);
+        }
+
+        function setRating(value) {
+            rating = value;
+            starsWrap.setAttribute('data-rating', value);
+            stars.forEach(function(star) {
+                star.classList.toggle('is-active', parseInt(star.getAttribute('data-value'), 10) <= value);
+            });
+        }
+
+        stars.forEach(function(star) {
+            star.addEventListener('click', function() {
+                setRating(parseInt(star.getAttribute('data-value'), 10));
+            });
+        });
+
+        function dismiss() {
+            if (dismissed) { closeModal(); return; }
+            dismissed = true;
+            var formData = new FormData();
+            formData.append('action', 'stanray_dismiss_post_purchase_review');
+            formData.append('nonce', stanrayData.nonce);
+            fetch(stanrayData.ajaxUrl, { method: 'POST', body: formData, credentials: 'same-origin' });
+            closeModal();
+        }
+
+        if (overlay)  overlay.addEventListener('click', dismiss);
+        if (closeBtn) closeBtn.addEventListener('click', dismiss);
+        if (skipBtn)  skipBtn.addEventListener('click', dismiss);
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape' && modal.classList.contains('is-open')) dismiss();
+        });
+
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            errorEl.hidden = true;
+
+            if (!rating) {
+                errorEl.textContent = 'Please choose a star rating.';
+                errorEl.hidden = false;
+                return;
+            }
+
+            var submitBtn = form.querySelector('.review-popup-modal__submit');
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Submitting…';
+
+            var formData = new FormData(form);
+            formData.append('action', 'stanray_submit_post_purchase_review');
+            formData.append('nonce', stanrayData.nonce);
+            formData.append('rating', rating);
+
+            fetch(stanrayData.ajaxUrl, { method: 'POST', body: formData, credentials: 'same-origin' })
+                .then(function(res) { return res.json(); })
+                .then(function(res) {
+                    if (res.success) {
+                        dismissed = true;
+                        modal.querySelector('.review-popup-modal__box').innerHTML =
+                            '<p class="review-popup-modal__thanks">' + res.data.message + '</p>';
+                        setTimeout(closeModal, 1800);
+                    } else {
+                        errorEl.textContent = (res.data && res.data.message) || 'Something went wrong. Please try again.';
+                        errorEl.hidden = false;
+                        submitBtn.disabled = false;
+                        submitBtn.textContent = 'Submit Review';
+                    }
+                })
+                .catch(function() {
+                    errorEl.textContent = 'Something went wrong. Please try again.';
+                    errorEl.hidden = false;
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'Submit Review';
+                });
+        });
+    });
+})();
+
 // ── OVO SHOP: AJAX PAGINATION + SORT & FILTER DRAWER ─────────────────────────
 (function () {
     var shop = document.getElementById('ovo-shop');
@@ -609,97 +721,168 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 })();
 
-// ── WISHLIST TOGGLE ──────────────────────────────────────────────────────────
-document.addEventListener('DOMContentLoaded', function() {
-    document.addEventListener('click', function(e) {
-        var btn = e.target.closest('.wishlist-btn, .wishlist-remove, .product-card__wish');
-        if (!btn) return;
-        e.preventDefault();
+// ── WISHLIST TOGGLE + LOGIN-REQUIRED MODAL ────────────────────────────────────
+(function() {
+    var PENDING_KEY = 'eskecy_pending_wish';
 
-        var productId = btn.dataset.productId;
-        var nonce     = btn.dataset.nonce || (window.eskecyWishlist && window.eskecyWishlist.nonce);
-        var ajaxUrl   = (window.eskecyWishlist && window.eskecyWishlist.ajaxUrl) || (window.stanrayData && window.stanrayData.ajaxUrl);
-        if (!productId || !ajaxUrl) return;
+    function applyWishlistResult(productId, action, count) {
+        // Update ALL wishlist buttons for this product (product page + all cards)
+        var allWishBtns = document.querySelectorAll('[data-product-id="' + productId + '"]');
+        allWishBtns.forEach(function(wb) {
+            if (wb.classList.contains('wishlist-btn')) {
+                var icon  = wb.querySelector('.wishlist-btn__icon');
+                var label = wb.querySelector('.wishlist-btn__label');
+                if (action === 'added') {
+                    wb.classList.add('is-wished');
+                    if (icon)  icon.textContent  = '♥';
+                    if (label) label.textContent = 'Remove from Wishlist';
+                    wb.setAttribute('aria-label', 'Remove from Wishlist');
+                } else {
+                    wb.classList.remove('is-wished');
+                    if (icon)  icon.textContent  = '♡';
+                    if (label) label.textContent = 'Save to Wishlist';
+                    wb.setAttribute('aria-label', 'Save to Wishlist');
+                }
+            } else if (wb.classList.contains('product-card__wish')) {
+                if (action === 'added') {
+                    wb.classList.add('is-wished');
+                    wb.textContent = '♥';
+                    wb.setAttribute('aria-label', 'Remove from Wishlist');
+                    wb.setAttribute('title', 'Remove from Wishlist');
+                } else {
+                    wb.classList.remove('is-wished');
+                    wb.textContent = '♡';
+                    wb.setAttribute('aria-label', 'Save to Wishlist');
+                    wb.setAttribute('title', 'Save to Wishlist');
+                }
+            }
+        });
 
+        // Update header count badge
+        var countEl = document.querySelector('.header-wishlist__count');
+        if (countEl) {
+            countEl.textContent = count;
+            countEl.style.display = count > 0 ? 'flex' : 'none';
+        } else if (count > 0) {
+            var heartLink = document.querySelector('.header-wishlist');
+            if (heartLink) {
+                var span = document.createElement('span');
+                span.className = 'header-wishlist__count';
+                span.textContent = count;
+                heartLink.appendChild(span);
+            }
+        }
+
+        // If on wishlist page, remove the card
+        if (action === 'removed') {
+            var btn  = document.querySelector('.wishlist-remove[data-product-id="' + productId + '"]');
+            var card = btn && btn.closest('.wishlist-card');
+            if (card) {
+                card.style.transition = 'opacity 0.3s ease';
+                card.style.opacity = '0';
+                setTimeout(function() { card.remove(); }, 300);
+            }
+        }
+    }
+
+    function toggleWishlist(productId, nonce, ajaxUrl) {
         var formData = new FormData();
         formData.append('action', 'eskecy_toggle_wishlist');
         formData.append('product_id', productId);
         formData.append('nonce', nonce);
+        return fetch(ajaxUrl, { method: 'POST', body: formData }).then(function(r) { return r.json(); });
+    }
 
-        btn.style.opacity = '0.6';
-        btn.disabled = true;
+    var loginModal = null;
 
-        fetch(ajaxUrl, { method: 'POST', body: formData })
-            .then(function(r) { return r.json(); })
-            .then(function(data) {
-                if (!data.success) return;
-                var action = data.data.action;
+    function openLoginModal() {
+        if (!loginModal) return;
+        loginModal.classList.add('is-open');
+        document.body.style.overflow = 'hidden';
+    }
+    function closeLoginModal(clearPending) {
+        if (!loginModal) return;
+        loginModal.classList.remove('is-open');
+        document.body.style.overflow = '';
+        if (clearPending) sessionStorage.removeItem(PENDING_KEY);
+    }
 
-                // Update ALL wishlist buttons for this product (product page + all cards)
-                var allWishBtns = document.querySelectorAll('[data-product-id="' + productId + '"]');
-                allWishBtns.forEach(function(wb) {
-                    if (wb.classList.contains('wishlist-btn')) {
-                        var icon  = wb.querySelector('.wishlist-btn__icon');
-                        var label = wb.querySelector('.wishlist-btn__label');
-                        if (action === 'added') {
-                            wb.classList.add('is-wished');
-                            if (icon)  icon.textContent  = '♥';
-                            if (label) label.textContent = 'Remove from Wishlist';
-                            wb.setAttribute('aria-label', 'Remove from Wishlist');
-                        } else {
-                            wb.classList.remove('is-wished');
-                            if (icon)  icon.textContent  = '♡';
-                            if (label) label.textContent = 'Save to Wishlist';
-                            wb.setAttribute('aria-label', 'Save to Wishlist');
-                        }
-                    } else if (wb.classList.contains('product-card__wish')) {
-                        if (action === 'added') {
-                            wb.classList.add('is-wished');
-                            wb.textContent = '♥';
-                            wb.setAttribute('aria-label', 'Remove from Wishlist');
-                            wb.setAttribute('title', 'Remove from Wishlist');
-                        } else {
-                            wb.classList.remove('is-wished');
-                            wb.textContent = '♡';
-                            wb.setAttribute('aria-label', 'Save to Wishlist');
-                            wb.setAttribute('title', 'Save to Wishlist');
-                        }
-                    }
-                });
+    document.addEventListener('DOMContentLoaded', function() {
+        loginModal = document.getElementById('wishlist-login-modal');
 
-                // Update header count badge
-                var countEl = document.querySelector('.header-wishlist__count');
-                var count   = data.data.count;
-                if (countEl) {
-                    countEl.textContent = count;
-                    countEl.style.display = count > 0 ? 'flex' : 'none';
-                } else if (count > 0) {
-                    var heartLink = document.querySelector('.header-wishlist');
-                    if (heartLink) {
-                        var span = document.createElement('span');
-                        span.className = 'header-wishlist__count';
-                        span.textContent = count;
-                        heartLink.appendChild(span);
-                    }
-                }
-
-                // If on wishlist page, remove the card
-                if (action === 'removed') {
-                    var card = btn.closest('.wishlist-card');
-                    if (card) {
-                        card.style.transition = 'opacity 0.3s ease';
-                        card.style.opacity = '0';
-                        setTimeout(function() { card.remove(); }, 300);
-                    }
-                }
-            })
-            .catch(function() {})
-            .finally(function() {
-                btn.style.opacity = '';
-                btn.disabled = false;
+        if (loginModal) {
+            var overlay  = document.getElementById('wishlist-login-overlay');
+            var closeBtn = document.getElementById('wishlist-login-close');
+            if (overlay)  overlay.addEventListener('click', function() { closeLoginModal(true); });
+            if (closeBtn) closeBtn.addEventListener('click', function() { closeLoginModal(true); });
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape' && loginModal.classList.contains('is-open')) closeLoginModal(true);
             });
+
+            // Checkout: guest checkout is disabled, so pop the modal open
+            // immediately rather than waiting for a click.
+            if (loginModal.classList.contains('wishlist-login-modal--autoopen')) {
+                openLoginModal();
+            }
+        }
+
+        // Fallback link shown in place of the checkout form when a guest
+        // dismisses the auto-opened modal (see woocommerce_checkout_must_be_logged_in_message).
+        document.addEventListener('click', function(e) {
+            var trigger = e.target.closest('.wishlist-login-trigger');
+            if (!trigger) return;
+            e.preventDefault();
+            openLoginModal();
+        });
+
+        var pendingId = sessionStorage.getItem(PENDING_KEY);
+        if (pendingId && window.stanrayData) {
+            if (window.stanrayData.isLoggedIn) {
+                var nonce   = (window.eskecyWishlist && window.eskecyWishlist.nonce) || stanrayData.nonce;
+                var ajaxUrl = (window.eskecyWishlist && window.eskecyWishlist.ajaxUrl) || stanrayData.ajaxUrl;
+                toggleWishlist(pendingId, nonce, ajaxUrl).then(function(data) {
+                    sessionStorage.removeItem(PENDING_KEY);
+                    if (data.success) applyWishlistResult(pendingId, data.data.action, data.data.count);
+                    closeLoginModal(false);
+                });
+            } else {
+                // Came back here after a failed login/register submission — reopen with the error shown.
+                openLoginModal();
+            }
+        }
+
+        document.addEventListener('click', function(e) {
+            var btn = e.target.closest('.wishlist-btn, .wishlist-remove, .product-card__wish');
+            if (!btn) return;
+            e.preventDefault();
+
+            var productId = btn.dataset.productId;
+            var nonce     = btn.dataset.nonce || (window.eskecyWishlist && window.eskecyWishlist.nonce);
+            var ajaxUrl   = (window.eskecyWishlist && window.eskecyWishlist.ajaxUrl) || (window.stanrayData && window.stanrayData.ajaxUrl);
+            if (!productId || !ajaxUrl) return;
+
+            btn.style.opacity = '0.6';
+            btn.disabled = true;
+
+            toggleWishlist(productId, nonce, ajaxUrl)
+                .then(function(data) {
+                    if (!data.success) {
+                        if (data.data && data.data.code === 'login_required') {
+                            sessionStorage.setItem(PENDING_KEY, productId);
+                            openLoginModal();
+                        }
+                        return;
+                    }
+                    applyWishlistResult(productId, data.data.action, data.data.count);
+                })
+                .catch(function() {})
+                .finally(function() {
+                    btn.style.opacity = '';
+                    btn.disabled = false;
+                });
+        });
     });
-});
+})();
 
 // ── CUSTOMER REVIEWS SLIDER ──────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', function () {
@@ -874,4 +1057,21 @@ document.addEventListener('DOMContentLoaded', function () {
 
     document.addEventListener('mouseleave', function () { cc.classList.remove('is-visible'); });
     document.addEventListener('mouseenter', function () { cc.classList.add('is-visible'); });
+
+    /* ── PASSWORD SHOW/HIDE TOGGLE ─────────────────────────────── */
+    document.addEventListener('click', function (e) {
+        const toggle = e.target.closest('.stanray-toggle-password');
+        if (!toggle) return;
+
+        const wrap  = toggle.closest('.stanray-input-wrap');
+        const input = wrap ? wrap.querySelector('input') : null;
+        if (!input) return;
+
+        const isHidden = input.getAttribute('type') === 'password';
+        input.setAttribute('type', isHidden ? 'text' : 'password');
+        toggle.setAttribute('aria-pressed', isHidden ? 'true' : 'false');
+        toggle.setAttribute('aria-label', isHidden ? 'Hide password' : 'Show password');
+        toggle.querySelector('.stanray-toggle-password__icon-eye').hidden = isHidden;
+        toggle.querySelector('.stanray-toggle-password__icon-eye-off').hidden = !isHidden;
+    });
 })();

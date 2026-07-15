@@ -177,6 +177,16 @@ add_action( 'wp_ajax_nopriv_eskecy_toggle_wishlist', 'eskecy_toggle_wishlist_han
 
 function eskecy_toggle_wishlist_handler() {
     check_ajax_referer( 'eskecy_wishlist', 'nonce' );
+
+    // Wishlist is account-only — guests get a structured error so the JS can
+    // open the login/register modal instead of silently failing.
+    if ( ! is_user_logged_in() ) {
+        wp_send_json_error( [
+            'code'    => 'login_required',
+            'message' => 'Please log in to save items to your wishlist.',
+        ] );
+    }
+
     $product_id = absint( $_POST['product_id'] ?? 0 );
     if ( ! $product_id ) wp_send_json_error();
 
@@ -250,6 +260,10 @@ add_filter( 'woocommerce_checkout_fields', function( $fields ) {
     unset( $fields['billing']['billing_company'] );
     return $fields;
 } );
+
+// ─── CHECKOUT: Move coupon form from top of page to just above the Place Order button ──
+remove_action( 'woocommerce_before_checkout_form', 'woocommerce_checkout_coupon_form', 10 );
+add_action( 'woocommerce_review_order_before_submit', 'woocommerce_checkout_coupon_form', 10 );
 
 // ─── THANK YOU / ORDER RECEIVED PAGE ──────────────────────────────────────────
 add_action( 'woocommerce_before_thankyou', function( $order_id ) {

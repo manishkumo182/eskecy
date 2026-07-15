@@ -223,3 +223,88 @@ function stanray_flush_notices() {
 }
 add_action( 'wp_ajax_stanray_flush_notices',        'stanray_flush_notices' );
 add_action( 'wp_ajax_nopriv_stanray_flush_notices', 'stanray_flush_notices' );
+
+/**
+ * Post-purchase review popup — submit.
+ *
+ * Goes through wp_new_comment() with comment_type=review and a 'rating'
+ * $_POST field, exactly like WooCommerce's own review form, so its native
+ * comment_post hooks (rating meta, verified-owner flag, average rating
+ * recalculation, moderation) all fire the same way a normal review would.
+ */
+function stanray_submit_post_purchase_review() {
+    check_ajax_referer( 'stanray_nonce', 'nonce' );
+
+    if ( ! is_user_logged_in() ) {
+        wp_send_json_error( [ 'message' => 'You must be logged in to leave a review.' ] );
+    }
+
+    $user_id    = get_current_user_id();
+    $product_id = absint( $_POST['product_id'] ?? 0 );
+    $order_id   = absint( $_POST['order_id'] ?? 0 );
+    $rating     = absint( $_POST['rating'] ?? 0 );
+    $comment    = sanitize_textarea_field( wp_unslash( $_POST['comment'] ?? '' ) );
+
+    $pending = get_user_meta( $user_id, '_stanray_pending_review', true );
+    if ( empty( $pending['product_id'] )
+        || (int) $pending['product_id'] !== $product_id
+        || (int) $pending['order_id'] !== $order_id ) {
+        wp_send_json_error( [ 'message' => 'This review prompt has expired.' ] );
+    }
+
+    $order = wc_get_order( $order_id );
+    if ( ! $order
+        || (int) $order->get_customer_id() !== $user_id
+        || ! wc_customer_bought_product( $order->get_billing_email(), $user_id, $product_id ) ) {
+        wp_send_json_error( [ 'message' => 'This product was not part of your order.' ] );
+    }
+
+    if ( $rating < 1 || $rating > 5 ) {
+        wp_send_json_error( [ 'message' => 'Please choose a star rating.' ] );
+    }
+
+    if ( stanray_user_has_reviewed( $product_id, $user_id ) ) {
+        delete_user_meta( $user_id, '_stanray_pending_review' );
+        wp_send_json_error( [ 'message' => 'You already reviewed this product.' ] );
+    }
+
+    $user = get_userdata( $user_id );
+
+    // WooCommerce's own rating-save hook (WC_Comments::add_comment_rating) reads
+    // $_POST['comment_post_ID'] directly rather than the commentdata array passed
+    // to wp_new_comment() below — that's the field name WordPress's native comment
+    // form posts under. Our AJAX body uses 'product_id', so that field is set here
+    // so WC's hook actually fires and saves the star rating / recalculates the
+    // product's average rating.
+    $_POST['comment_post_ID'] = $product_id;
+
+    $comment_id = wp_new_comment( [
+        'comment_post_ID'      => $product_id,
+        'comment_author'       => $user->display_name,
+        'comment_author_email' => $user->user_email,
+        'comment_content'      => $comment,
+        'comment_type'         => 'review',
+        'user_id'              => $user_id,
+    ], true );
+
+    if ( is_wp_error( $comment_id ) ) {
+        wp_send_json_error( [ 'message' => $comment_id->get_error_message() ] );
+    }
+
+    delete_user_meta( $user_id, '_stanray_pending_review' );
+
+    wp_send_json_success( [ 'message' => 'Thanks! Your review has been submitted.' ] );
+}
+add_action( 'wp_ajax_stanray_submit_post_purchase_review', 'stanray_submit_post_purchase_review' );
+
+/**
+ * Post-purchase review popup — "Maybe later" dismiss.
+ */
+function stanray_dismiss_post_purchase_review() {
+    check_ajax_referer( 'stanray_nonce', 'nonce' );
+    if ( is_user_logged_in() ) {
+        delete_user_meta( get_current_user_id(), '_stanray_pending_review' );
+    }
+    wp_send_json_success();
+}
+add_action( 'wp_ajax_stanray_dismiss_post_purchase_review', 'stanray_dismiss_post_purchase_review' );

@@ -277,6 +277,45 @@
 
 .stanray-input::placeholder { color: var(--color-gray-400); }
 
+/* ── Password field with show/hide toggle ─────────────────── */
+.stanray-input-wrap {
+    position: relative;
+}
+
+.stanray-input-wrap .stanray-input {
+    padding-right: calc(var(--space-md) + 26px);
+}
+
+.stanray-toggle-password {
+    position: absolute;
+    top: 50%;
+    right: var(--space-sm);
+    transform: translateY(-50%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    background: none;
+    border: none;
+    color: var(--color-gray-400);
+    cursor: pointer;
+    transition: color var(--transition-fast);
+}
+
+.stanray-toggle-password:hover,
+.stanray-toggle-password:focus-visible {
+    color: var(--color-black);
+}
+
+/* main.css sets a global `svg { display: block; }`, which overrides the
+   browser's default `[hidden]` styling — restate it here with higher
+   specificity so only one icon shows at a time. */
+.stanray-toggle-password svg[hidden] {
+    display: none;
+}
+
 .stanray-field-row {
     display: grid;
     grid-template-columns: 1fr 1fr;

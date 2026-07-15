@@ -12,6 +12,7 @@ get_header();
             <a href="<?php echo esc_url( wc_get_page_permalink('shop') ); ?>" class="section__link">Continue Shopping &rarr;</a>
         </div>
         <?php echo do_shortcode('[eskecy_wishlist]'); ?>
+        
     </div>
 </main>
 <?php get_footer(); ?>

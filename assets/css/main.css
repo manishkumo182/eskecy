@@ -859,6 +859,14 @@ h1.page-title { text-align: left; font-size: 20px;
     font-family: var(--font-body);
   }
 .woocommerce-terms-and-conditions-wrapper { margin-bottom: var(--space-md); }
+
+/* Coupon form relocated to just above the Place Order button */
+.form-row.place-order .woocommerce-form-coupon-toggle {
+    margin-bottom: var(--space-md);
+}
+.form-row.place-order .checkout_coupon.woocommerce-form-coupon {
+    margin-bottom: var(--space-md);
+}
 input#wp-block-search__input-1 { padding: var(--space-sm); border-radius: 6px; margin-top: var(--space-12);}
 
 @media (max-width: 768px) {
@@ -2333,6 +2341,181 @@ justify-content: space-between;
     line-height: 1.7;
 }
 
+/* ── POST-PURCHASE REVIEW MODAL ─────────────────────────────── */
+.review-popup-modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: var(--z-modal);
+    align-items: center;
+    justify-content: center;
+}
+.review-popup-modal.is-open { display: flex; }
+.review-popup-modal__overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    backdrop-filter: blur(4px);
+}
+.review-popup-modal__box {
+    position: relative;
+    z-index: 1;
+    background: var(--color-white);
+    padding: var(--space-40);
+    max-width: 440px;
+    width: 90%;
+    max-height: 90vh;
+    overflow-y: auto;
+    text-align: center;
+}
+.review-popup-modal__close {
+    position: absolute;
+    top: 1rem; right: 1rem;
+    font-size: 1.5rem;
+    background: none; border: none;
+    cursor: pointer;
+    color: var(--color-gray-600);
+    line-height: 1;
+}
+.review-popup-modal__close:hover { color: var(--color-black); }
+.review-popup-modal h2 {
+    font-family: var(--font-display);
+    font-size: 1.5rem;
+    margin-bottom: var(--space-sm);
+}
+.review-popup-modal__sub {
+    font-size: var(--font-size-sm);
+    color: var(--color-gray-600);
+    margin-bottom: var(--space-24);
+}
+.review-popup-modal__product {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+    text-align: left;
+    padding: var(--space-md);
+    background: var(--color-gray-100);
+    margin-bottom: var(--space-24);
+}
+.review-popup-modal__product img {
+    width: 56px;
+    height: 70px;
+    object-fit: cover;
+    flex-shrink: 0;
+}
+.review-popup-modal__product span {
+    font-size: var(--font-size-sm);
+    font-weight: 500;
+}
+.review-popup-modal__stars {
+    display: flex;
+    justify-content: center;
+    gap: var(--space-sm);
+    margin-bottom: var(--space-24);
+}
+.review-popup-star {
+    font-size: 2rem;
+    line-height: 1;
+    color: var(--color-gray-200);
+    transition: color var(--transition-fast);
+}
+.review-popup-star.is-active { color: var(--color-accent); }
+.review-popup-modal textarea {
+    width: 100%;
+    border: 1px solid var(--color-gray-200);
+    padding: var(--space-md);
+    font-family: var(--font-body);
+    font-size: var(--font-size-sm);
+    resize: vertical;
+    margin-bottom: var(--space-md);
+}
+.review-popup-modal__error {
+    color: var(--color-error);
+    font-size: var(--font-size-xs);
+    margin-bottom: var(--space-md);
+}
+.review-popup-modal__actions {
+    display: flex;
+    gap: var(--space-md);
+}
+.review-popup-modal__skip,
+.review-popup-modal__submit {
+    flex: 1;
+    padding: var(--space-12);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    font-size: var(--font-size-xs);
+    transition: var(--transition-base);
+}
+.review-popup-modal__skip {
+    background: transparent;
+    border: 1px solid var(--color-gray-200);
+    color: var(--color-gray-600);
+}
+.review-popup-modal__skip:hover { border-color: var(--color-black); color: var(--color-black); }
+.review-popup-modal__submit {
+    background: var(--color-black);
+    border: 1px solid var(--color-black);
+    color: var(--color-white);
+}
+.review-popup-modal__submit:hover { background: var(--color-gray-800); }
+.review-popup-modal__submit:disabled { opacity: 0.6; cursor: default; }
+.review-popup-modal__thanks {
+    font-family: var(--font-display);
+    font-size: 1.25rem;
+    padding: var(--space-lg) 0;
+}
+
+/* ── WISHLIST LOGIN MODAL ───────────────────────────────────── */
+.wishlist-login-modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: var(--z-modal);
+    align-items: center;
+    justify-content: center;
+    padding: var(--space-md);
+}
+.wishlist-login-modal.is-open { display: flex; }
+.wishlist-login-modal__overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    backdrop-filter: blur(4px);
+}
+.wishlist-login-modal__box {
+    position: relative;
+    z-index: 1;
+    background: var(--color-white);
+    max-width: 900px;
+    width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+.wishlist-login-modal__close {
+    position: absolute;
+    top: 1rem; right: 1rem;
+    z-index: 2;
+    font-size: 1.5rem;
+    background: none; border: none;
+    cursor: pointer;
+    color: var(--color-gray-600);
+    line-height: 1;
+}
+.wishlist-login-modal__close:hover { color: var(--color-black); }
+.wishlist-login-modal__intro {
+    text-align: center;
+    font-size: var(--font-size-sm);
+    color: var(--color-gray-600);
+    padding: var(--space-24) var(--space-24) 0;
+}
+.wishlist-login-modal .stanray-auth { margin-top: 0; }
+.wishlist-login-modal .woocommerce-notices-wrapper,
+.wishlist-login-modal .woocommerce-error,
+.wishlist-login-modal .woocommerce-message {
+    margin: var(--space-24) var(--space-24) 0;
+}
+
 /* ── ANNOUNCEMENT BAR (force it always visible) ──────────────── */
 .announcement-bar { display: block !important; }
 
@@ -3008,6 +3191,26 @@ justify-content: space-between;
     .cat-tabs__header {
         flex-direction: column;
         align-items: flex-start;
+    }
+
+    /* Pills become a single-row horizontal slider instead of wrapping */
+    .cat-tabs__pills {
+        flex-wrap: nowrap;
+        width: 100%;
+        overflow-x: auto;
+        overflow-y: hidden;
+        -webkit-overflow-scrolling: touch;
+        scroll-snap-type: x proximity;
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+    }
+
+    .cat-tabs__pills::-webkit-scrollbar {
+        display: none;
+    }
+
+    .cat-tab-pill {
+        scroll-snap-align: start;
     }
 
     .cat-tabs__grid.product-grid--3col {
