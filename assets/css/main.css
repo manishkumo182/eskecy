@@ -447,7 +447,8 @@ form.woocommerce-ordering {
 
 .mini-cart__drawer {
     position: absolute;
-    top: 10px; right: 0;
+    top: 0px;
+    right: 0;
     height: 100%;
     width: min(420px, 95vw);
     background: var(--color-white);
@@ -2005,9 +2006,17 @@ table.shop_table.woocommerce-checkout-review-order-table {
     border-radius: 6px;
 }
 
+.cart-info {
+    /* .remove-item sits absolutely positioned at top:15px/right:15px over
+       .cart-item — reserve that column so long titles wrap clear of it
+       instead of running underneath. */
+    padding-right: 32px;
+}
+
 .cart-info h4 {
     font-size: var(--font-size-md);
     margin-bottom: var(--space-xs);
+    overflow-wrap: break-word;
 }
 
 .price {
