@@ -1,0 +1,129 @@
+<?php
+/**
+ * Template Part: Category Tabs — tabbed product browser by category
+ */
+
+$tab_cats = get_terms([
+    'taxonomy'   => 'product_cat',
+    'hide_empty' => true,
+    'exclude'    => get_option('default_product_cat'),
+    'orderby'    => 'count',
+    'order'      => 'DESC',
+    'number'     => 6,
+]);
+
+if ( is_wp_error($tab_cats) || empty($tab_cats) ) return;
+
+$tab_products = wc_get_products([
+    'status'  => 'publish',
+    'limit'   => 12,
+    'orderby' => 'date',
+    'order'   => 'DESC',
+]);
+
+if ( empty($tab_products) ) return;
+?>
+
+<section class="cat-tabs section" aria-label="Shop by Category">
+    <div class="container">
+
+        <div class="cat-tabs__header">
+            <div class="cat-tabs__heading">
+                <p class="cat-tabs__eyebrow">New Arrivals</p>
+                <h2 class="cat-tabs__title">The Best<br>Products</h2>
+            </div>
+            <div class="cat-tabs__pills" role="tablist" aria-label="Filter by category">
+                <button class="cat-tab-pill is-active" data-cat="all" role="tab" aria-selected="true">All</button>
+                <?php foreach ( $tab_cats as $cat ) : ?>
+                <button class="cat-tab-pill" data-cat="<?php echo esc_attr( $cat->slug ); ?>" role="tab" aria-selected="false">
+                    <?php echo esc_html( $cat->name ); ?>
+                </button>
+                <?php endforeach; ?>
+            </div>
+        </div>
+
+        <div class="cat-tabs__grid product-grid product-grid--3col" role="tabpanel">
+            <?php foreach ( $tab_products as $product ) :
+                $product_id  = $product->get_id();
+                $img_id      = $product->get_image_id();
+                $gallery_ids = $product->get_gallery_image_ids();
+                $img_url     = $img_id ? wp_get_attachment_image_url( $img_id, 'stanray-product-grid' ) : wc_placeholder_img_src();
+                $hover_url   = ! empty( $gallery_ids ) ? wp_get_attachment_image_url( $gallery_ids[0], 'stanray-product-grid' ) : null;
+
+                $p_terms    = get_the_terms( $product_id, 'product_cat' );
+                $cat_slugs  = [];
+                $badge_name = '';
+                if ( $p_terms && ! is_wp_error( $p_terms ) ) {
+                    foreach ( $p_terms as $t ) {
+                        $cat_slugs[] = $t->slug;
+                        if ( ! $badge_name ) $badge_name = $t->name;
+                    }
+                }
+
+                $wl_cookie = isset( $_COOKIE['eskecy_wishlist'] ) ? json_decode( stripslashes( $_COOKIE['eskecy_wishlist'] ), true ) : [];
+                $in_wish   = is_array( $wl_cookie ) && in_array( $product_id, $wl_cookie );
+            ?>
+            <article class="product-card cat-tabs__card"
+                     data-cats="<?php echo esc_attr( implode( ' ', $cat_slugs ) ); ?>"
+                     data-product-id="<?php echo esc_attr( $product_id ); ?>">
+                <a href="<?php echo esc_url( $product->get_permalink() ); ?>" class="product-card__link">
+                    <div class="product-card__image-wrap cat-tabs__img-wrap">
+                        <img src="<?php echo esc_url( $img_url ); ?>"
+                             alt="<?php echo esc_attr( $product->get_name() ); ?>"
+                             class="product-card__img" loading="lazy">
+                        <?php if ( $hover_url ) : ?>
+                        <img src="<?php echo esc_url( $hover_url ); ?>" alt="" class="product-card__img--hover" loading="lazy" aria-hidden="true">
+                        <?php endif; ?>
+                        <?php if ( $badge_name ) : ?>
+                        <span class="cat-tabs__badge"><?php echo esc_html( $badge_name ); ?></span>
+                        <?php endif; ?>
+                        <?php if ( $product->is_on_sale() ) : ?>
+                        <span class="product-card__badge">Sale</span>
+                        <?php endif; ?>
+                    </div>
+                    <div class="product-card__info">
+                        <h3 class="product-card__title"><?php echo esc_html( $product->get_name() ); ?></h3>
+                        <div class="product-card__price"><?php echo $product->get_price_html(); ?></div>
+                    </div>
+                </a>
+                <button class="product-card__wish<?php echo $in_wish ? ' is-wished' : ''; ?>"
+                    data-product-id="<?php echo esc_attr( $product_id ); ?>"
+                    data-nonce="<?php echo esc_attr( wp_create_nonce( 'eskecy_wishlist' ) ); ?>"
+                    aria-label="<?php echo $in_wish ? 'Remove from Wishlist' : 'Save to Wishlist'; ?>"
+                    title="<?php echo $in_wish ? 'Remove from Wishlist' : 'Save to Wishlist'; ?>"
+                ><?php echo $in_wish ? '&#x2665;' : '&#x2661;'; ?></button>
+            </article>
+            <?php endforeach; ?>
+        </div>
+
+    </div>
+</section>
+
+<script>
+(function () {
+    var pills = document.querySelectorAll('.cat-tab-pill');
+    var cards = document.querySelectorAll('.cat-tabs__card');
+
+    pills.forEach(function (pill) {
+        pill.addEventListener('click', function () {
+            var cat = this.dataset.cat;
+
+            pills.forEach(function (p) {
+                p.classList.remove('is-active');
+                p.setAttribute('aria-selected', 'false');
+            });
+            this.classList.add('is-active');
+            this.setAttribute('aria-selected', 'true');
+
+            cards.forEach(function (card) {
+                if (cat === 'all') {
+                    card.style.display = '';
+                } else {
+                    var cats = card.dataset.cats ? card.dataset.cats.split(' ') : [];
+                    card.style.display = cats.indexOf(cat) !== -1 ? '' : 'none';
+                }
+            });
+        });
+    });
+}());
+</script>
