@@ -492,6 +492,146 @@ function stanray_save_banner_video_field( $term_id ) {
 add_action( 'created_product_cat', 'stanray_save_banner_video_field' );
 add_action( 'edited_product_cat',  'stanray_save_banner_video_field' );
 
+// ─── PDP REDESIGN: enqueue dedicated JS on single product pages only ──────────
+add_action( 'wp_enqueue_scripts', function() {
+    if ( is_product() ) {
+        wp_enqueue_script(
+            'stanray-single-product',
+            STANRAY_URI . '/assets/js/single-product.js',
+            [ 'jquery' ],
+            STANRAY_VERSION,
+            true
+        );
+    }
+}, 20 );
+
+// ─── PDP REDESIGN: tabs — drop "Additional information", add "Shipping & Return" ──
+add_filter( 'woocommerce_product_tabs', function( $tabs ) {
+    unset( $tabs['additional_information'] );
+
+    if ( isset( $tabs['reviews'] ) ) {
+        $tabs['reviews']['title'] = __( 'Review', 'stanray-custom' );
+    }
+
+    $tabs['shipping_return'] = [
+        'title'    => __( 'Shipping & Return', 'stanray-custom' ),
+        'priority' => 20,
+        'callback' => 'stanray_shipping_return_tab_content',
+    ];
+
+    return $tabs;
+}, 98 );
+
+function stanray_shipping_return_tab_content() {
+    $default = "Standard shipping takes 3–5 business days. Express shipping is available at checkout.\n\nReturns are accepted within 30 days of delivery. Items must be unused, unworn, and in original packaging.";
+    $content = get_theme_mod( 'product_shipping_return_content', $default );
+    echo '<div class="shipping-return-content">' . wp_kses_post( wpautop( $content ) ) . '</div>';
+}
+
+// ─── PDP REDESIGN: add a "Review title" field to the review form ──────────────
+add_filter( 'woocommerce_product_review_comment_form_args', function( $comment_form ) {
+    $title_field = '<p class="comment-form-review-title">'
+        . '<label for="review_title">' . esc_html__( 'Review title', 'stanray-custom' ) . '</label>'
+        . '<input id="review_title" name="review_title" type="text" maxlength="120" placeholder="' . esc_attr__( 'Sum up your review in a few words', 'stanray-custom' ) . '">'
+        . '</p>';
+    $comment_form['comment_field'] = $title_field . $comment_form['comment_field'];
+    return $comment_form;
+}, 20 );
+
+add_action( 'comment_post', function( $comment_id ) {
+    if ( isset( $_POST['review_title'] ) ) {
+        update_comment_meta( $comment_id, 'review_title', sanitize_text_field( wp_unslash( $_POST['review_title'] ) ) );
+    }
+} );
+
+// ─── PDP REDESIGN: "Sort by" support for the review list (?review_sort=) ──────
+add_filter( 'comments_template_query_args', function( $args ) {
+    if ( ! is_product() ) return $args;
+
+    $sort = isset( $_GET['review_sort'] ) ? sanitize_key( $_GET['review_sort'] ) : 'newest';
+
+    switch ( $sort ) {
+        case 'oldest':
+            $args['order'] = 'ASC';
+            break;
+        case 'highest':
+            $args['meta_key'] = 'rating';
+            $args['orderby']  = [ 'meta_value_num' => 'DESC', 'comment_date' => 'DESC' ];
+            break;
+        case 'lowest':
+            $args['meta_key'] = 'rating';
+            $args['orderby']  = [ 'meta_value_num' => 'ASC', 'comment_date' => 'DESC' ];
+            break;
+        default:
+            $args['order'] = 'DESC';
+            break;
+    }
+
+    return $args;
+} );
+
+// ─── PDP REDESIGN: star-by-star rating breakdown (for the review summary bars) ──
+function stanray_get_rating_breakdown( $product_id ) {
+    global $wpdb;
+
+    $rows = $wpdb->get_results( $wpdb->prepare(
+        "SELECT cm.meta_value AS rating, COUNT(*) AS cnt
+         FROM {$wpdb->comments} c
+         INNER JOIN {$wpdb->commentmeta} cm ON cm.comment_id = c.comment_ID AND cm.meta_key = 'rating'
+         WHERE c.comment_post_ID = %d
+           AND c.comment_approved = '1'
+         GROUP BY cm.meta_value",
+        $product_id
+    ) );
+
+    $counts = [ 5 => 0, 4 => 0, 3 => 0, 2 => 0, 1 => 0 ];
+    $total  = 0;
+    foreach ( $rows as $row ) {
+        $r = (int) round( (float) $row->rating );
+        if ( $r >= 1 && $r <= 5 ) {
+            $counts[ $r ] += (int) $row->cnt;
+            $total        += (int) $row->cnt;
+        }
+    }
+
+    $breakdown = [];
+    foreach ( [ 5, 4, 3, 2, 1 ] as $star ) {
+        $breakdown[ $star ] = [
+            'count'   => $counts[ $star ],
+            'percent' => $total ? round( ( $counts[ $star ] / $total ) * 100 ) : 0,
+        ];
+    }
+
+    return [ 'total' => $total, 'breakdown' => $breakdown ];
+}
+
+// ─── PDP REDESIGN: "Buy Now" — add to cart, then straight to checkout ─────────
+// Also fixes a site-wide bug: WooCommerce's classic (non-AJAX) add-to-cart
+// form doesn't redirect anywhere by default (the "Redirect to cart page"
+// setting is off), so the response the browser is looking at IS the raw POST
+// request. Refreshing then trips the browser's "Confirm Form Resubmission"
+// prompt, and confirming it re-adds the item — the cart total climbs by one
+// every refresh. Redirecting back to the product page after a normal add
+// (Post/Redirect/Get) makes the current URL a plain GET again, so refreshing
+// is safe. The "added to cart" notice still shows because WC stores it in
+// the session, not in the URL.
+//
+// wp_get_referer() can't be used for the redirect target here — the
+// add-to-cart form posts to the product's own permalink, so WP's
+// self-referential guard (it refuses to return a referer equal to the
+// current request URL) always makes it return false in this exact case.
+// The product itself is passed as the filter's 2nd argument, so build the
+// redirect from that instead.
+add_filter( 'woocommerce_add_to_cart_redirect', function( $url, $product = null ) {
+    if ( isset( $_REQUEST['buy_now'] ) ) {
+        return wc_get_checkout_url();
+    }
+    if ( $url ) {
+        return $url;
+    }
+    return ( $product instanceof WC_Product ) ? $product->get_permalink() : $url;
+}, 10, 2 );
+
 add_action( 'admin_enqueue_scripts', function( $hook ) {
     if ( ! in_array( $hook, [ 'edit-tags.php', 'term.php' ], true ) ) return;
     if ( ( $_GET['taxonomy'] ?? '' ) !== 'product_cat' ) return;

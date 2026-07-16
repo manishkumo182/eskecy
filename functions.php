@@ -817,31 +817,9 @@ add_action( 'after_setup_theme', function() {
     }
 }, 20 );
 
-// ─── IMPROVEMENT 2: SIZE GUIDE POPUP DATA ─────────────────────────────────────
-
-
-add_action( 'woocommerce_single_product_summary', function() {
-    global $product;
-    $attrs = $product->get_attributes();
-    if ( isset($attrs['pa_size']) || isset($attrs['size']) ) {
-        echo '<a href="#" class="size-guide-trigger" aria-haspopup="dialog">📏 Size Guide</a>';
-    }
-}, 27 );
-
-// ─── IMPROVEMENT 3: STOCK INDICATOR on product pages ─────────────────────────
-add_action( 'woocommerce_single_product_summary', function() {
-    global $product;
-    if ( $product->managing_stock() ) {
-        $qty = $product->get_stock_quantity();
-        if ( $qty !== null && $qty <= 10 && $qty > 0 ) {
-            echo '<p class="low-stock-notice">⚡ Only ' . absint($qty) . ' left in stock!</p>';
-        } elseif ( $product->is_in_stock() ) {
-            echo '<p class="in-stock-notice">✔ In stock — ready to ship</p>';
-        }
-    } elseif ( $product->is_in_stock() ) {
-        echo '<p class="in-stock-notice">✔ In stock — ready to ship</p>';
-    }
-}, 15 );
+// ─── IMPROVEMENT 2/3: size guide link + stock indicator now live only in
+// inc/woocommerce.php (they were duplicated there, causing the size-guide
+// link and stock pill to render twice on the product page).
 
 // ─── IMPROVEMENT 4: ENQUEUE size guide CSS/JS ─────────────────────────────────
 add_action( 'wp_enqueue_scripts', function() {

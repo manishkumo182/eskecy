@@ -74,5 +74,22 @@ function stanray_customizer_register( $wp_customize ) {
             'type'    => 'url',
         ] );
     }
+
+    // ─── SECTION: Product Page ────────────────────────────────────────────────
+    $wp_customize->add_section( 'stanray_product', [
+        'title' => __( 'Product Page', 'stanray-custom' ),
+        'panel' => 'stanray_options',
+    ] );
+
+    $wp_customize->add_setting( 'product_shipping_return_content', [
+        'default'           => "Standard shipping takes 3–5 business days. Express shipping is available at checkout.\n\nReturns are accepted within 30 days of delivery. Items must be unused, unworn, and in original packaging.",
+        'sanitize_callback' => 'wp_kses_post',
+    ] );
+    $wp_customize->add_control( 'product_shipping_return_content', [
+        'label'       => __( 'Shipping & Return Tab Text', 'stanray-custom' ),
+        'description' => __( 'Shown in the "Shipping & Return" tab on every product page. Leave blank paragraphs (double line breaks) between sections.', 'stanray-custom' ),
+        'section'     => 'stanray_product',
+        'type'        => 'textarea',
+    ] );
 }
 add_action( 'customize_register', 'stanray_customizer_register' );
