@@ -1195,7 +1195,7 @@ input#wp-block-search__input-1 { padding: var(--space-sm); border-radius: 6px; m
 .video-detail {
     background: #000;
     color: var(--color-white);
-    padding: var(--space-80) var(--container-pad);
+    padding: var(--space-2xl) var(--container-pad);
 }
 
 .video-layout {
