@@ -15,7 +15,7 @@ if ($youtube) {
 
 <div class="video-detail">
 
-    <a href="<?php echo home_url('/videos'); ?>" class="btn-back">← Back</a>
+    <a href="<?php echo home_url('/events'); ?>" class="btn-back">← Back</a>
 
     <div class="video-layout">
 
