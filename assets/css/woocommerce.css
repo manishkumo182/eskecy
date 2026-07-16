@@ -94,6 +94,11 @@ body.single-product div.product > .woocommerce-tabs,
 body.single-product div.product > .up-sells,
 body.single-product div.product > .related.products {
     grid-column: 1 / -1;
+    /* Grid items default to min-width:auto, i.e. "never shrink below my
+       content's natural width" — without this, a single unshrinkable child
+       deep inside (e.g. a flex row) silently pushes this whole section past
+       its column and off the right edge of the viewport on narrow screens. */
+    min-width: 0;
 }
 
 .summary.entry-summary .product_title {
@@ -1454,7 +1459,7 @@ section.related.products {
 .pdp-reviews__bars { display: flex; flex-direction: column; gap: var(--space-sm); }
 .pdp-reviews__bar-row { display: flex; align-items: center; gap: var(--space-md); }
 .pdp-reviews__bar-label { width: 50px; font-size: var(--font-size-xs); color: var(--color-gray-600); flex-shrink: 0; }
-.pdp-reviews__bar-track { flex: 1; height: 6px; background: var(--color-gray-100); border-radius: 999px; overflow: hidden; }
+.pdp-reviews__bar-track { flex: 1; min-width: 0; height: 6px; background: var(--color-gray-100); border-radius: 999px; overflow: hidden; }
 .pdp-reviews__bar-fill { display: block; height: 100%; background: var(--color-accent); border-radius: 999px; }
 
 .pdp-reviews__list-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-md); margin-bottom: var(--space-lg); }
@@ -1574,6 +1579,10 @@ section.related.products {
 
 @media (max-width: 900px) {
     body.single-product div.product { grid-template-columns: 1fr; }
+    /* Explicit grid-row:1 on both items (set for the desktop 2-col layout)
+       would otherwise stack them in the same cell instead of one per row. */
+    body.single-product div.product > .pdp-gallery,
+    body.single-product div.product > .summary.entry-summary { grid-column: 1; grid-row: auto; }
     .pdp-gallery { position: static; }
     .pdp-reviews__summary { grid-template-columns: 1fr; }
 }
