@@ -84,6 +84,10 @@ body.single-product div.product {
     align-items: start;
     padding-block: var(--space-lg);
 }
+.wc-block-components-button__text {
+    color: white;
+}
+
 body.single-product div.product > .pdp-gallery { grid-column: 1; grid-row: 1; }
 body.single-product div.product > .summary.entry-summary { grid-column: 2; grid-row: 1; padding-top: var(--space-md); }
 body.single-product div.product > .woocommerce-tabs,
@@ -1424,7 +1428,7 @@ section.related.products {
     color: var(--color-gray-600);
     transition: all var(--transition-fast);
 }
-.pdp-share__icon:hover { background: var(--color-black); color: var(--color-white); }
+.pdp-share__icon:hover { background: var(--color-white); color: var(--color-white); }
 
 /* ── SHIPPING & RETURN TAB ────────────────────────────────────── */
 .shipping-return-content p { margin-bottom: var(--space-md); }
