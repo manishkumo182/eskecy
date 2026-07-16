@@ -214,7 +214,7 @@ a.btn.btn--primary.order-action:hover {
 .home .site-header,
 .site-header.is-scrolled {
     position: fixed;
-    top: 40px;
+    top: 25px;
     background: none;
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
