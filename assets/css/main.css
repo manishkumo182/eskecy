@@ -1710,6 +1710,7 @@ text-underline-offset:none!important;
 }
 table.shop_table.woocommerce-checkout-review-order-table {
     text-align: left;
+    width:450px;
     margin-top:2rem;
     margin-bottom: 2rem;
     background: var(--color-white);
