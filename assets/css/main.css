@@ -1829,11 +1829,22 @@ table.shop_table.woocommerce-checkout-review-order-table {
     .new-arrival-page {
         padding: var(--space-40) var(--space-20);
     }
+    .breadcrumb {
+    padding-top: var(--space-80);
+}
+.tour-dates__item {
+    display: grid;
+}
+    
+.video-card{
+    padding:10px;
+}
 
     .shop-header {
         flex-direction: column;
         align-items: flex-start;
         gap: 10px;
+        margin-top:20px;
     }
     .video-layout {
     display: inline-block;
