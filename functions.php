@@ -73,23 +73,23 @@ function stanray_enqueue_assets() {
     );
 
     // Main CSS
-    wp_enqueue_style( 'stanray-main', STANRAY_URI . '/assets/css/main.css', [ 'stanray-fonts' ], STANRAY_VERSION );
+    wp_enqueue_style( 'stanray-main', STANRAY_URI . '/assets/css/main.css?v1', [ 'stanray-fonts' ], STANRAY_VERSION );
 
     // Hero + Header CSS
-    wp_enqueue_style( 'stanray-hero-header', STANRAY_URI . '/assets/css/hero-header.css', [ 'stanray-main' ], STANRAY_VERSION );
+    wp_enqueue_style( 'stanray-hero-header', STANRAY_URI . '/assets/css/hero-header.css?v1', [ 'stanray-main' ], STANRAY_VERSION );
 
     // Top Marquee Bar CSS
-    wp_enqueue_style( 'stanray-marquee-bar', STANRAY_URI . '/assets/css/marquee-bar.css', [ 'stanray-main' ], STANRAY_VERSION );
+    wp_enqueue_style( 'stanray-marquee-bar', STANRAY_URI . '/assets/css/marquee-bar.css?v1', [ 'stanray-main' ], STANRAY_VERSION );
 
     // WooCommerce CSS — only on WC pages
     if ( function_exists( 'is_woocommerce' ) && ( is_woocommerce() || is_cart() || is_checkout() || is_account_page() ) ) {
-        wp_enqueue_style( 'stanray-woo', STANRAY_URI . '/assets/css/woocommerce.css', [ 'stanray-main' ], STANRAY_VERSION );
+        wp_enqueue_style( 'stanray-woo', STANRAY_URI . '/assets/css/woocommerce.css?v1', [ 'stanray-main' ], STANRAY_VERSION );
     }
 
     // Account CSS — on account pages, and everywhere for guests (powers the
     // wishlist login modal, which reuses the same Login/Register markup).
     if ( is_account_page() || ! is_user_logged_in() ) {
-        wp_enqueue_style( 'stanray-account', STANRAY_URI . '/assets/css/account.css', [ 'stanray-main' ], STANRAY_VERSION );
+        wp_enqueue_style( 'stanray-account', STANRAY_URI . '/assets/css/account.css?v1', [ 'stanray-main' ], STANRAY_VERSION );
     }
 
     // Main JS
