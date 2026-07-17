@@ -4529,7 +4529,7 @@ html.has-custom-cursor.cc-on-image .cc__label {
         font-family: var(--font-display);
         font-size: var(--font-size-lg);
     }
-    body.is-order-received .invoice-letterhead__brand img { max-height: 40px; }
+    body.is-order-received .invoice-letterhead__brand img { max-height: 40px; width: auto; }
     body.is-order-received .invoice-letterhead__meta {
         text-align: right;
         font-size: var(--font-size-sm);

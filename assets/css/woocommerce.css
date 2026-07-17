@@ -1278,7 +1278,10 @@ body.is-order-received .page-content { padding-block: var(--space-lg) var(--spac
     transition: opacity var(--transition-base);
 }
 .pdp-gallery__slide.is-active { opacity: 1; pointer-events: auto; }
-
+section.woocommerce-customer-details {
+    background-color: white;
+    padding: 30px;
+}
 .pdp-gallery__arrow {
     position: absolute;
     top: 50%;
