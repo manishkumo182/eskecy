@@ -535,6 +535,13 @@ form.woocommerce-ordering {
     grid-template-columns: repeat(4, 1fr);
     gap: 25px;
 }
+@media (max-width: 900px) {
+    .wishlist-grid { grid-template-columns: repeat(2, 1fr); gap: var(--space-20); }
+}
+@media (max-width: 480px) {
+    .wishlist-grid { gap: var(--space-md); }
+    .sr-layout { padding: var(--space-md) !important; }
+}
 .mini-cart__close,
 .category-drawer__close {
     top: var(--space-md);
