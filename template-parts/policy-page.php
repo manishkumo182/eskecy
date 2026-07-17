@@ -137,10 +137,10 @@ $stanray_toc_pseudo_heading = function ( $matches ) use ( &$toc ) {
     color: var(--color-gray-800);
 }
 .policy-body h2 {
-    font-family: var(--font-display);
+    font-family: var(--font-body);
     font-weight: 400;
-    font-size: var(--font-size-xl);
-    margin-top: var(--space-2xl);
+    font-size: var(--font-size-md);
+    margin-top: var(--space-md);
     padding-top: var(--space-lg);
     padding-bottom: 0;
     border-top: 1px solid var(--color-gray-200);
