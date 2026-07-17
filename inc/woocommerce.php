@@ -266,6 +266,26 @@ remove_action( 'woocommerce_before_checkout_form', 'woocommerce_checkout_coupon_
 add_action( 'woocommerce_review_order_before_submit', 'woocommerce_checkout_coupon_form', 10 );
 
 // ─── THANK YOU / ORDER RECEIVED PAGE ──────────────────────────────────────────
+
+// Print-only letterhead — invisible on screen, shown via @media print so the
+// printed/"Save as PDF" invoice has a proper header instead of the on-screen hero.
+add_action( 'woocommerce_before_thankyou', function( $order_id ) {
+    $order = wc_get_order( $order_id );
+    if ( ! $order ) return;
+    ?>
+    <div class="invoice-letterhead">
+        <div class="invoice-letterhead__brand">
+            <?php if ( has_custom_logo() ) { the_custom_logo(); } else { bloginfo( 'name' ); } ?>
+        </div>
+        <div class="invoice-letterhead__meta">
+            <span class="invoice-letterhead__label">Invoice</span>
+            <span>Order #<?php echo esc_html( $order->get_order_number() ); ?></span>
+            <span><?php echo esc_html( wc_format_datetime( $order->get_date_created() ) ); ?></span>
+        </div>
+    </div>
+    <?php
+}, 1 );
+
 add_action( 'woocommerce_before_thankyou', function( $order_id ) {
     echo '<div class="thankyou-hero__icon" aria-hidden="true"><svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="20" cy="20" r="19" stroke="currentColor" stroke-width="1.5"/><path d="M12 20.5l5.5 5.5L28 14.5" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/></svg></div>';
     echo '<span class="thankyou-hero__eyebrow">' . esc_html__( 'Order Confirmed', 'stanray' ) . '</span>';
@@ -274,6 +294,7 @@ add_action( 'woocommerce_before_thankyou', function( $order_id ) {
 add_action( 'woocommerce_thankyou', function( $order_id ) {
     $shop_url = wc_get_page_permalink( 'shop' );
     echo '<div class="thankyou-actions">';
+    echo '<button type="button" class="btn btn--outline order-action" onclick="window.print()">' . esc_html__( 'Print / Save as PDF', 'stanray' ) . '</button>';
     echo '<a href="' . esc_url( $shop_url ) . '" class="btn btn--primary order-action">' . esc_html__( 'Continue Shopping', 'stanray' ) . '</a>';
     if ( is_user_logged_in() ) {
         echo '<a href="' . esc_url( wc_get_account_endpoint_url( 'orders' ) ) . '" class="btn btn--outline order-action">' . esc_html__( 'View Order History', 'stanray' ) . '</a>';

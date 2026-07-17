@@ -4495,3 +4495,58 @@ html.has-custom-cursor.cc-on-image .cc__label {
     .cr__pagination { display: none; } /* pagination hidden on tiny screens — arrows only */
 }
 
+/* ── ORDER-RECEIVED / INVOICE PRINT ─────────────────────────────────────── */
+.invoice-letterhead { display: none; }
+
+@media print {
+    body.is-order-received #site-header,
+    body.is-order-received #site-footer,
+    body.is-order-received .footer-perks,
+    body.is-order-received .whatsapp-fab,
+    body.is-order-received .marquee-bar,
+    body.is-order-received .thankyou-actions,
+    body.is-order-received #wpadminbar,
+    body.is-order-received .stanray-toast,
+    body.is-order-received iframe,
+    body.is-order-received .grecaptcha-badge {
+        display: none !important;
+    }
+
+    body.is-order-received {
+        background: #fff;
+        padding-top: 0 !important;
+    }
+
+    body.is-order-received .invoice-letterhead {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        border-bottom: 2px solid #000;
+        padding-bottom: var(--space-md);
+        margin-bottom: var(--space-lg);
+    }
+    body.is-order-received .invoice-letterhead__brand {
+        font-family: var(--font-display);
+        font-size: var(--font-size-lg);
+    }
+    body.is-order-received .invoice-letterhead__brand img { max-height: 40px; }
+    body.is-order-received .invoice-letterhead__meta {
+        text-align: right;
+        font-size: var(--font-size-sm);
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+    }
+    body.is-order-received .invoice-letterhead__label {
+        font-weight: 600;
+        letter-spacing: var(--letter-spacing);
+        text-transform: uppercase;
+        font-size: var(--font-size-xs);
+    }
+
+    body.is-order-received .thankyou-hero__icon,
+    body.is-order-received .thankyou-hero__eyebrow {
+        display: none !important;
+    }
+}
+
