@@ -991,6 +991,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
 // ── CUSTOM CURSOR ────────────────────────────────────────────────────────────
 (function () {
+    // Disabled for now (kept native pointer). Remove this line to re-enable.
+    return;
+
     // Touch devices keep native behaviour
     if ('ontouchstart' in window || navigator.maxTouchPoints > 0) return;
 
