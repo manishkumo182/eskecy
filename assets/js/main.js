@@ -1020,8 +1020,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function animRing() {
         rafId = null;
-        rx += (mx - rx) * 0.13;
-        ry += (my - ry) * 0.13;
+        rx += (mx - rx) * 0.22;
+        ry += (my - ry) * 0.22;
         var pos = rx.toFixed(2) + 'px';
         var posY = ry.toFixed(2) + 'px';
         ring.style.left  = pos;
