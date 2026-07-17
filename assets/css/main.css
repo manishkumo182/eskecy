@@ -1889,14 +1889,14 @@ table.shop_table.woocommerce-checkout-review-order-table {
     .footer-perks__inner { grid-template-columns: repeat(2, 1fr); gap: 1.75rem 2rem; }
 }
 @media (max-width: 768px) {
-    .footer-inner { flex-direction: column; gap: 2.5rem; padding: 3rem 1.5rem 2rem; }
+    .footer-inner { flex-direction: column; align-items: stretch; gap: 2.5rem; padding: 3rem 1.5rem 2rem; }
     .footer-brand { flex: none; }
-    .footer-cols { grid-template-columns: repeat(2, 1fr); }
+    .footer-cols { grid-template-columns: repeat(2, 1fr); width: 100%; }
     .footer-bottom { flex-direction: column; gap: 0.75rem; text-align: center; padding: 1rem 1.5rem; }
     .footer-perks__inner { padding: 2.25rem 1.5rem; }
 }
 @media (max-width: 480px) {
-    .footer-cols { grid-template-columns: 1fr 1fr; gap: 3.5rem 3rem; }
+    .footer-cols { grid-template-columns: 1fr 1fr; gap: 3.5rem 1.5rem; width: 100%; }
     .footer-inner { padding: 2.5rem 1.25rem 1.75rem; }
     .footer-perks__inner { grid-template-columns: 1fr; padding: 2rem 1.25rem; gap: 1.5rem; }
 }
