@@ -441,6 +441,46 @@
     line-height: 1.6;
 }
 
+/* Single-panel variant — lost/reset password, confirmation screens.
+   The base .stanray-auth grid is hardcoded for the two-column login/register
+   layout (panel / 1px divider / panel); this collapses it to one centered
+   column and caps the width so a lone form doesn't stretch full-bleed. */
+.stanray-auth--single {
+    display: block;
+    max-width: 480px;
+    padding: var(--space-48) var(--space-lg);
+}
+
+.stanray-auth__back {
+    display: block;
+    margin-top: var(--space-lg);
+    text-align: center;
+    font-family: var(--font-body);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--color-gray-600);
+    text-decoration: none;
+    transition: color var(--transition-fast);
+}
+.stanray-auth__back:hover { color: var(--color-black); }
+
+.stanray-auth__panel-inner--centered { text-align: center; }
+
+.stanray-auth__sub--centered { margin-left: auto; margin-right: auto; }
+
+.stanray-auth__check {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 64px;
+    height: 64px;
+    margin: 0 auto var(--space-lg);
+    border-radius: 50%;
+    background: var(--color-gray-100);
+    color: var(--color-accent, #c8a96e);
+}
+
 /* ── Dashboard ────────────────────────────────────────────── */
 
 /* Welcome bar */

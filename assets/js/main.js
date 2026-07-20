@@ -1060,8 +1060,13 @@ document.addEventListener('DOMContentLoaded', function () {
 
     document.addEventListener('mouseleave', function () { cc.classList.remove('is-visible'); });
     document.addEventListener('mouseenter', function () { cc.classList.add('is-visible'); });
+})();
 
-    /* ── PASSWORD SHOW/HIDE TOGGLE ─────────────────────────────── */
+// ── PASSWORD SHOW/HIDE TOGGLE ─────────────────────────────────────────────────
+// Was nested inside the custom-cursor IIFE above, after its early `return` —
+// disabling the cursor silently killed this too (login, register, reset-password
+// forms all use it). Standalone now so it's independent of that switch.
+(function () {
     document.addEventListener('click', function (e) {
         const toggle = e.target.closest('.stanray-toggle-password');
         if (!toggle) return;
