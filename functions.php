@@ -202,6 +202,7 @@ require_once STANRAY_DIR . '/inc/admin-select-style.php';
 require_once STANRAY_DIR . '/inc/admin-shop-the-look.php';
 require_once STANRAY_DIR . '/inc/admin-homepage-video.php';
 require_once STANRAY_DIR . '/inc/admin-events-hero.php';
+require_once STANRAY_DIR . '/inc/admin-about-page.php';
 require_once STANRAY_DIR . '/inc/gateway-qr-payment.php';
 require_once STANRAY_DIR . '/inc/notify-payment-success.php';
 require_once STANRAY_DIR . '/inc/post-purchase-review.php';
