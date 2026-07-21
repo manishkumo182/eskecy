@@ -941,9 +941,9 @@ button[name="add-to-cart"] {
     line-height: 1.35;
 }
 .ovo-card__price {
-    font-size: 0.7rem;
-    font-weight: 400;
-    color: var(--color-gray-600);
+    font-size: 1rem;
+    font-weight: 500;
+    color: var(--color-black);
 }
 .ovo-card__price .price { color: inherit; }
 .ovo-card__price .price del { color: var(--color-gray-400); margin-right: 0.3rem; }

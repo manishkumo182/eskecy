@@ -3,6 +3,26 @@
  * Header scroll, mobile menu, mini cart drawer, search toggle
  */
 
+/* ── PAGINATION: land back on the same section, not page top ────
+   Plain paginate_links() pagination is a normal <a href> — clicking
+   it reloads the page, and with no URL fragment the browser scrolls
+   to the very top by default, dumping the visitor back above a
+   section that might be well down the page (tour dates, video
+   archive, new-arrival grid). Any pagination wrapper marked with
+   data-scroll-anchor="some-id" gets its links' hrefs rewritten to
+   include "#some-id" so the post-reload browser scroll lands back
+   on that section instead. */
+document.addEventListener('DOMContentLoaded', function () {
+    document.querySelectorAll('[data-scroll-anchor]').forEach(function (wrap) {
+        var anchor = wrap.getAttribute('data-scroll-anchor');
+        if (!anchor) return;
+        wrap.querySelectorAll('a[href]').forEach(function (link) {
+            if (link.hash) return; // already has a fragment, leave it
+            link.href = link.href.split('#')[0] + '#' + anchor;
+        });
+    });
+});
+
 /* ── GLOBAL LOADING OVERLAY ────────────────────────────────────
    Dims the screen and shows a spinner for anything that might take
    a moment: WooCommerce's own AJAX (cart, checkout, coupons, mini-

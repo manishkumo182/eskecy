@@ -94,7 +94,7 @@ $tour_dates = new WP_Query([
             </div>
 
             <?php if ( $tour_dates->max_num_pages > 1 ) : ?>
-                <div class="pagination tour-dates__pagination">
+                <div class="pagination tour-dates__pagination" data-scroll-anchor="tour-dates">
                     <?php
                     echo paginate_links([
                         'base'      => add_query_arg( 'tour_page', '%#%' ),
@@ -111,7 +111,7 @@ $tour_dates = new WP_Query([
         <?php endif; ?>
 
         <!-- VIDEO GRID -->
-        <section class="video-gallery section" aria-label="Video Archive">
+        <section id="video-archive" class="video-gallery section" aria-label="Video Archive">
             <h2 class="video-grid_title">The Sushant KC Archive</h2>
             <div class="video-grid">
 
@@ -136,7 +136,7 @@ $tour_dates = new WP_Query([
             </div>
 
             <?php if ( $wp_query->max_num_pages > 1 ) : ?>
-                <div class="pagination video-grid__pagination">
+                <div class="pagination video-grid__pagination" data-scroll-anchor="video-archive">
                     <?php
                     echo paginate_links([
                         'prev_text' => '←',

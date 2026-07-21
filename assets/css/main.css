@@ -3657,6 +3657,7 @@ justify-content: space-between;
     white-space: nowrap;
 }
 
+.dt__btn-cart .price,
 .dt__btn-cart .woocommerce-Price-amount {
     color: inherit;
     font-size: inherit;

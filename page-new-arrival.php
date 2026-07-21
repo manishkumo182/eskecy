@@ -70,7 +70,7 @@ get_header();
         </div>
 
         <!-- ✅ PRODUCT GRID -->
-        <div class="product-grid">
+        <div class="product-grid" id="new-arrival-grid">
             <?php
             if ($loop->have_posts()) {
                 while ($loop->have_posts()) : $loop->the_post();
@@ -159,6 +159,21 @@ get_header();
             }
             ?>
         </div>
+
+        <?php if ( $loop->max_num_pages > 1 ) : ?>
+        <div class="pagination new-arrival-page__pagination" data-scroll-anchor="new-arrival-grid">
+            <?php
+            echo paginate_links([
+                'base'      => add_query_arg( 'paged', '%#%' ),
+                'format'    => '',
+                'current'   => $paged,
+                'total'     => $loop->max_num_pages,
+                'prev_text' => '←',
+                'next_text' => '→',
+            ]);
+            ?>
+        </div>
+        <?php endif; ?>
 
         <?php wp_reset_postdata(); ?>
 
