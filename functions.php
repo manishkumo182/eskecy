@@ -205,6 +205,7 @@ require_once STANRAY_DIR . '/inc/admin-events-hero.php';
 require_once STANRAY_DIR . '/inc/admin-about-page.php';
 require_once STANRAY_DIR . '/inc/gateway-qr-payment.php';
 require_once STANRAY_DIR . '/inc/notify-payment-success.php';
+require_once STANRAY_DIR . '/inc/order-status-delivered.php';
 require_once STANRAY_DIR . '/inc/post-purchase-review.php';
 require_once STANRAY_DIR . '/inc/wishlist-login-modal.php';
 require_once STANRAY_DIR . '/inc/address-book.php';
@@ -907,7 +908,16 @@ add_action( 'init', function() {
 function stanray_review_meta_callback( $post ) {
     wp_nonce_field( 'eskecy_review_save', 'eskecy_review_nonce' );
     $product_label = get_post_meta( $post->ID, '_review_product_label', true );
+    $product_id    = (int) get_post_meta( $post->ID, '_review_product_id', true );
     $quote         = get_post_meta( $post->ID, '_review_quote', true );
+
+    $products = get_posts( [
+        'post_type'      => 'product',
+        'post_status'    => 'publish',
+        'posts_per_page' => -1,
+        'orderby'        => 'title',
+        'order'          => 'ASC',
+    ] );
     ?>
     <style>
         .eskecy-meta-table th { width: 160px; padding: 12px 8px; vertical-align: top; }
@@ -915,6 +925,20 @@ function stanray_review_meta_callback( $post ) {
         .eskecy-meta-note { color: #666; font-style: italic; margin-top: 10px; padding: 8px 12px; background: #f9f9f9; border-left: 3px solid #e8192c; }
     </style>
     <table class="form-table eskecy-meta-table">
+        <tr>
+            <th><label for="review_product_id">Linked Product</label></th>
+            <td>
+                <select id="review_product_id" name="review_product_id" class="widefat">
+                    <option value="">— None (label only, no link) —</option>
+                    <?php foreach ( $products as $product ) : ?>
+                        <option value="<?php echo esc_attr( $product->ID ); ?>" <?php selected( $product_id, $product->ID ); ?>>
+                            <?php echo esc_html( $product->post_title ); ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+                <p class="description">If set, clicking the product name/label on the slide card takes the visitor to this product's page.</p>
+            </td>
+        </tr>
         <tr>
             <th><label for="review_product_label">Product Name / Label</label></th>
             <td>
@@ -949,6 +973,14 @@ add_action( 'save_post_eskecy_review', function( $post_id ) {
 
     if ( isset( $_POST['review_product_label'] ) ) {
         update_post_meta( $post_id, '_review_product_label', sanitize_text_field( $_POST['review_product_label'] ) );
+    }
+    if ( isset( $_POST['review_product_id'] ) ) {
+        $product_id = absint( $_POST['review_product_id'] );
+        if ( $product_id && get_post_type( $product_id ) === 'product' ) {
+            update_post_meta( $post_id, '_review_product_id', $product_id );
+        } else {
+            delete_post_meta( $post_id, '_review_product_id' );
+        }
     }
     if ( isset( $_POST['review_quote'] ) ) {
         update_post_meta( $post_id, '_review_quote', sanitize_textarea_field( $_POST['review_quote'] ) );

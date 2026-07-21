@@ -297,6 +297,21 @@ button[name="add-to-cart"] {
     box-shadow: none;
 }
 
+.stanray-notice-close {
+    flex-shrink: 0;
+    width: 18px;
+    height: 18px;
+    line-height: 1;
+    border: none;
+    background: none;
+    color: inherit;
+    opacity: 0.5;
+    cursor: pointer;
+    font-size: 16px;
+    padding: 0;
+}
+.stanray-notice-close:hover { opacity: 1; }
+
 /* ── RESPONSIVE WOO ──────────────────────────────────────────── */
 @media (max-width: 900px) {
     .shop-layout { grid-template-columns: 1fr; }

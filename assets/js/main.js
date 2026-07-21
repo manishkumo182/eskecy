@@ -3,6 +3,65 @@
  * Header scroll, mobile menu, mini cart drawer, search toggle
  */
 
+/* ── GLOBAL LOADING OVERLAY ────────────────────────────────────
+   Dims the screen and shows a spinner for anything that might take
+   a moment: WooCommerce's own AJAX (cart, checkout, coupons, mini-
+   cart — all jQuery-based), our fetch() calls, and native full-page
+   form posts (login, register, account, address, contact). A short
+   delay before revealing avoids a flash on requests that are fast. */
+(function () {
+    var el = document.getElementById('stanray-loader');
+    if (!el) return;
+
+    var pending    = 0;
+    var showTimer  = null;
+    var SHOW_DELAY = 150; // ms
+
+    function show() {
+        pending++;
+        if (pending === 1 && !showTimer) {
+            showTimer = setTimeout(function () {
+                showTimer = null;
+                if (pending > 0) el.classList.add('is-active');
+            }, SHOW_DELAY);
+        }
+    }
+
+    function hide() {
+        pending = Math.max(0, pending - 1);
+        if (pending === 0) {
+            if (showTimer) { clearTimeout(showTimer); showTimer = null; }
+            el.classList.remove('is-active');
+        }
+    }
+
+    window.StanrayLoader = { show: show, hide: hide };
+
+    // WooCommerce cart/checkout/coupon/mini-cart AJAX all run through
+    // jQuery, so this one hook covers every WC interaction site-wide.
+    if (window.jQuery) {
+        window.jQuery(document).on('ajaxStart', show).on('ajaxStop', hide);
+    }
+
+    // Native (non-AJAX) form posts — these fully reload the page, so we
+    // only need to show the overlay; the new page load clears it for us.
+    var NATIVE_FORM_SELECTORS = [
+        '.contact-form',
+        '.woocommerce-form-login',
+        '.woocommerce-form-register',
+        '.woocommerce-ResetPassword',
+        '.woocommerce-EditAccountForm',
+        '.stanray-address-form'
+    ].join(', ');
+
+    document.addEventListener('submit', function (e) {
+        var form = e.target;
+        if (!(form instanceof HTMLFormElement)) return;
+        if (e.defaultPrevented) return;
+        if (form.matches(NATIVE_FORM_SELECTORS)) show();
+    });
+})();
+
 (function($) {
     'use strict';
 
@@ -256,6 +315,34 @@ function stanrayFlushNotices() {
     });
 }
 
+/* ── STATIC WC NOTICES (page-load, not AJAX) ─────────────────────
+   The toast flow above (stanrayFlushNotices) only covers notices
+   fetched over AJAX. Notices WooCommerce renders straight into the
+   page on a normal load/reload — e.g. the "X has been added to your
+   cart" banner on the single product page after a non-AJAX add-to-
+   cart submit — never got this treatment, so they sat there until
+   the visitor refreshed. Give them the same close button + 5s
+   auto-dismiss instead. */
+document.addEventListener('DOMContentLoaded', function () {
+    jQuery('.woocommerce-message, .woocommerce-error, .woocommerce-info')
+        .not('#stanray-toast, #stanray-toast *')
+        .each(function () {
+            var $notice = jQuery(this);
+            if ($notice.data('stanray-enhanced')) return;
+            $notice.data('stanray-enhanced', true);
+
+            $notice.css('transition', 'opacity 0.25s ease');
+            $notice.append('<button type="button" class="stanray-notice-close" aria-label="Dismiss">&times;</button>');
+
+            var dismiss = function () {
+                $notice.css('opacity', 0);
+                setTimeout(function () { $notice.remove(); }, 250);
+            };
+            $notice.on('click', '.stanray-notice-close', dismiss);
+            setTimeout(dismiss, 5000);
+        });
+});
+
 document.addEventListener("DOMContentLoaded", function () {
     if (!document.querySelector(".collections-slider")) return;
     new Swiper(".collections-slider", {
@@ -473,7 +560,9 @@ document.addEventListener('DOMContentLoaded', function() {
             var formData = new FormData();
             formData.append('action', 'stanray_dismiss_post_purchase_review');
             formData.append('nonce', stanrayData.nonce);
-            fetch(stanrayData.ajaxUrl, { method: 'POST', body: formData, credentials: 'same-origin' });
+            if (window.StanrayLoader) window.StanrayLoader.show();
+            fetch(stanrayData.ajaxUrl, { method: 'POST', body: formData, credentials: 'same-origin' })
+                .finally(function() { if (window.StanrayLoader) window.StanrayLoader.hide(); });
             closeModal();
         }
 
@@ -503,6 +592,7 @@ document.addEventListener('DOMContentLoaded', function() {
             formData.append('nonce', stanrayData.nonce);
             formData.append('rating', rating);
 
+            if (window.StanrayLoader) window.StanrayLoader.show();
             fetch(stanrayData.ajaxUrl, { method: 'POST', body: formData, credentials: 'same-origin' })
                 .then(function(res) { return res.json(); })
                 .then(function(res) {
@@ -523,7 +613,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     errorEl.hidden = false;
                     submitBtn.disabled = false;
                     submitBtn.textContent = 'Submit Review';
-                });
+                })
+                .finally(function() { if (window.StanrayLoader) window.StanrayLoader.hide(); });
         });
     });
 })();
@@ -581,6 +672,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (state.minPrice !== null) formData.append('min_price', state.minPrice);
         if (state.maxPrice !== null) formData.append('max_price', state.maxPrice);
 
+        if (window.StanrayLoader) window.StanrayLoader.show();
         fetch(ajaxUrl, { method: 'POST', body: formData })
             .then(function (r) { return r.json(); })
             .then(function (data) {
@@ -608,6 +700,7 @@ document.addEventListener('DOMContentLoaded', function() {
             .finally(function () {
                 isFetching = false;
                 setLoading(false);
+                if (window.StanrayLoader) window.StanrayLoader.hide();
             });
     }
 
@@ -790,7 +883,10 @@ document.addEventListener('DOMContentLoaded', function() {
         formData.append('action', 'eskecy_toggle_wishlist');
         formData.append('product_id', productId);
         formData.append('nonce', nonce);
-        return fetch(ajaxUrl, { method: 'POST', body: formData }).then(function(r) { return r.json(); });
+        if (window.StanrayLoader) window.StanrayLoader.show();
+        return fetch(ajaxUrl, { method: 'POST', body: formData })
+            .then(function(r) { return r.json(); })
+            .finally(function() { if (window.StanrayLoader) window.StanrayLoader.hide(); });
     }
 
     var loginModal = null;

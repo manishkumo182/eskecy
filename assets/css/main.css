@@ -2372,6 +2372,40 @@ justify-content: space-between;
 }
 
 /* ── POST-PURCHASE REVIEW MODAL ─────────────────────────────── */
+/* ── Global Loading Overlay ──────────────────────────────────── */
+.stanray-loader {
+    position: fixed;
+    inset: 0;
+    z-index: calc(var(--z-modal) + 10);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0,0,0,0.45);
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+}
+.stanray-loader.is-active {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: all;
+}
+.stanray-loader__spinner {
+    width: 42px;
+    height: 42px;
+    border: 3px solid rgba(255,255,255,0.25);
+    border-top-color: var(--color-accent);
+    border-radius: 50%;
+    animation: stanray-loader-spin 0.7s linear infinite;
+}
+@keyframes stanray-loader-spin {
+    to { transform: rotate(360deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+    .stanray-loader__spinner { animation-duration: 1.4s; }
+}
+
 .review-popup-modal {
     display: none;
     position: fixed;
@@ -4408,6 +4442,21 @@ html.has-custom-cursor.cc-on-image .cc__label {
     letter-spacing: 0.15em;
     text-transform: uppercase;
     color: #e8192c;
+}
+
+a.cr__card-label--link {
+    display: inline-block;
+    align-self: flex-start;
+    width: fit-content;
+    text-decoration: none;
+    border-bottom: 1px solid transparent;
+    transition: border-color 0.2s ease, opacity 0.2s ease;
+}
+
+a.cr__card-label--link:hover,
+a.cr__card-label--link:focus {
+    border-bottom-color: currentColor;
+    opacity: 0.85;
 }
 
 /* ── Controls ── */

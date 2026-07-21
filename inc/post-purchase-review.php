@@ -2,18 +2,23 @@
 /**
  * Post-purchase review popup.
  *
- * The first time a customer's order reaches processing/completed, we pick
- * one purchased product they haven't reviewed yet and remember it against
- * their account. The next time that customer loads any page on the site,
- * a modal prompts them for a star rating + comment, submitted as a real
- * WooCommerce product review (via wp_new_comment, comment_type=review) —
- * not a private form — so it actually counts toward the product's rating.
+ * The first time a customer's order is marked Delivered (see
+ * inc/order-status-delivered.php — a custom status set manually once the
+ * customer actually has the product), we pick one purchased product they
+ * haven't reviewed yet and remember it against their account. The next
+ * time that customer loads any page on the site, a modal prompts them for
+ * a star rating + comment, submitted as a real WooCommerce product review
+ * (via wp_new_comment, comment_type=review) — not a private form — so it
+ * actually counts toward the product's rating.
+ *
+ * Deliberately not hooked to processing/completed: those fire as soon as
+ * payment/fulfillment is done, before the customer has the item in hand —
+ * asking "how's your order?" at that point is premature.
  */
 
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-add_action( 'woocommerce_order_status_processing', 'stanray_queue_post_purchase_review' );
-add_action( 'woocommerce_order_status_completed',  'stanray_queue_post_purchase_review' );
+add_action( 'woocommerce_order_status_delivered', 'stanray_queue_post_purchase_review' );
 
 function stanray_queue_post_purchase_review( $order_id ) {
     $order = wc_get_order( $order_id );

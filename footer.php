@@ -164,6 +164,10 @@
 
 </div><!-- #page -->
 
+<!-- Global Loading Overlay -->
+<div id="stanray-loader" class="stanray-loader" aria-hidden="true" aria-live="polite">
+    <div class="stanray-loader__spinner"></div>
+</div>
 
 <!-- WhatsApp Floating Button -->
 <?php $wa = get_theme_mod( 'social_whatsapp' ); if ( $wa ) : ?>
