@@ -7,7 +7,7 @@
 if ( ! defined( 'ABSPATH' ) ) exit;
 
 // ─── THEME CONSTANTS ──────────────────────────────────────────────────────────
-define( 'STANRAY_VERSION', '1.0.4' );
+define( 'STANRAY_VERSION', '1.0.8' );
 define( 'STANRAY_DIR', get_template_directory() );
 define( 'STANRAY_URI', get_template_directory_uri() );
 

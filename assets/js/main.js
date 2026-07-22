@@ -82,6 +82,74 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 })();
 
+/* ── CART FRAGMENTS ───────────────────────────────────────────────
+   Shared by every place that changes the cart (add, quantity change,
+   remove) so they all sync the header badge AND the mini-cart drawer
+   the same way, from whatever fragments object each one has on hand.
+   Applying every key WooCommerce hands back — not just the badge —
+   matters here: this theme's mini-cart drawer is rendered inside
+   div.widget_shopping_cart_content, WooCommerce's own fragment key,
+   so it only stays in sync if that fragment gets applied too. Doing
+   it directly (rather than firing wc_fragment_refresh and relying on
+   core cart-fragments.js to pick it up) is what actually keeps both
+   in sync here. */
+function stanrayUpdateCartIcon(fragments) {
+    if (!fragments) return;
+    Object.keys(fragments).forEach(function (selector) {
+        document.querySelectorAll(selector).forEach(function (el) {
+            el.outerHTML = fragments[selector];
+        });
+    });
+}
+
+/* Fetches fresh fragments directly from WooCommerce's own endpoint —
+   used where we don't already have fragments in hand (e.g. after the
+   native cart-item remove link, which returns a full page, not JSON). */
+function stanrayFetchCartFragments(callback) {
+    if (typeof wc_cart_fragments_params === 'undefined') return;
+    var url = wc_cart_fragments_params.wc_ajax_url.toString().replace('%%endpoint%%', 'get_refreshed_fragments');
+    jQuery.post(url, { time: new Date().getTime() }, function (data) {
+        if (data && data.fragments) callback(data.fragments);
+    });
+}
+
+/* ── HEADER CART BADGE: sync with the WooCommerce Cart block ───────
+   The /cart/ page here is rendered as the WooCommerce Cart block
+   (Store API + @wordpress/data), not the classic shortcode cart —
+   it manages its own quantity/remove state internally and never
+   fires the legacy `added_to_cart` / `wc_fragment_refresh` jQuery
+   events that stanrayUpdateCartIcon above depends on. So changing a
+   quantity or removing an item (including the last item) there left
+   the header badge stuck at its pre-change value until a reload.
+   Subscribing directly to the block's own wc/store/cart data store
+   is the one thing both paths (qty change and remove) actually go
+   through, so it's the reliable place to catch every mutation. */
+(function () {
+    var attempts = 0;
+
+    function trySubscribe() {
+        attempts++;
+        if (!(window.wp && wp.data && wp.data.select('wc/store/cart'))) {
+            if (attempts < 20) setTimeout(trySubscribe, 250);
+            return;
+        }
+
+        var lastCount = null;
+        wp.data.subscribe(function () {
+            var cartData = wp.data.select('wc/store/cart').getCartData();
+            if (!cartData) return;
+            var count = typeof cartData.itemsCount === 'number' ? cartData.itemsCount : cartData.items_count;
+            if (typeof count !== 'number' || count === lastCount) return;
+            lastCount = count;
+            document.querySelectorAll('.cart-icon__count').forEach(function (el) {
+                el.textContent = count;
+            });
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', trySubscribe);
+})();
+
 (function($) {
     'use strict';
 
@@ -211,12 +279,7 @@ document.addEventListener('DOMContentLoaded', function () {
     // WooCommerce handles this natively with the wc-add-to-cart class.
     // We refresh the mini cart content after add.
     $(document.body).on('added_to_cart', function(e, fragments, cart_hash, button) {
-        // Update cart count from fragments
-        if (fragments && fragments['.cart-icon__count']) {
-            document.querySelectorAll('.cart-icon__count').forEach(el => {
-                el.outerHTML = fragments['.cart-icon__count'];
-            });
-        }
+        stanrayUpdateCartIcon(fragments);
         // Open mini cart on add
         openMiniCart();
         stanrayFlushNotices();
@@ -232,18 +295,25 @@ document.addEventListener('DOMContentLoaded', function () {
     if ('IntersectionObserver' in window) {
         const revealEls = document.querySelectorAll('.product-card, .collection-card, .section__title, .editorial__content-col');
         const revealObs = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
+            // Stagger delay is derived from this entry's position within the
+            // batch that just intersected, not the element's fixed index in
+            // the page. Using the page-wide index compounded across a long
+            // grid (e.g. a 40-card shop page), so cards far down the page
+            // waited over a second after scrolling into view before their
+            // fade even started — reading as a blank-space flicker.
+            entries.forEach((entry, i) => {
                 if (entry.isIntersecting) {
+                    entry.target.style.transitionDelay = `${i * 0.04}s`;
                     entry.target.classList.add('is-visible');
                     revealObs.unobserve(entry.target);
                 }
             });
         }, { threshold: 0.08, rootMargin: '0px 0px -40px 0px' });
 
-        revealEls.forEach((el, i) => {
+        revealEls.forEach((el) => {
             el.style.opacity = '0';
             el.style.transform = 'translateY(18px)';
-            el.style.transition = `opacity 0.55s ease ${i * 0.04}s, transform 0.55s ease ${i * 0.04}s`;
+            el.style.transition = 'opacity 0.55s ease, transform 0.55s ease';
             revealObs.observe(el);
         });
 
@@ -409,6 +479,12 @@ jQuery(document).ready(function ($) {
                 nonce: (window.stanrayData && stanrayData.nonce) || ''
             },
             success: function (response) {
+                // update_cart_qty's PHP handler already returns the same
+                // {fragments, cart_hash} shape as WC's own fragment-refresh
+                // endpoint, so apply it directly instead of only firing
+                // wc_fragment_refresh and hoping the indirect round trip
+                // picks it up.
+                stanrayUpdateCartIcon(response && response.fragments);
                 $(document.body).trigger("wc_fragment_refresh");
                 stanrayFlushNotices();
             }
@@ -448,6 +524,11 @@ jQuery(document).on('click', '.remove-item', function(e) {
     let url = jQuery(this).attr('href');
 
     jQuery.get(url, function() {
+        // The native remove_item URL returns a full page (or redirects to
+        // one), not JSON fragments, so fetch them explicitly rather than
+        // only firing wc_fragment_refresh and hoping the indirect round
+        // trip picks it up.
+        stanrayFetchCartFragments(stanrayUpdateCartIcon);
         jQuery(document.body).trigger('wc_fragment_refresh');
         stanrayFlushNotices();
     });
