@@ -35,14 +35,24 @@ document.addEventListener('DOMContentLoaded', function () {
 
     var pending    = 0;
     var showTimer  = null;
-    var SHOW_DELAY = 150; // ms
+    var maxTimer   = null;
+    var SHOW_DELAY = 150;   // ms
+    var MAX_DURATION = 10000; // ms — safety net: a request that never fires
+                               // its matching hide() (a submit blocked by
+                               // validation after we've already shown, a
+                               // stalled/aborted XHR, a thrown error skipping
+                               // a .finally()) must not leave this dimming
+                               // the whole screen forever.
 
     function show() {
         pending++;
         if (pending === 1 && !showTimer) {
             showTimer = setTimeout(function () {
                 showTimer = null;
-                if (pending > 0) el.classList.add('is-active');
+                if (pending > 0) {
+                    el.classList.add('is-active');
+                    maxTimer = setTimeout(forceHide, MAX_DURATION);
+                }
             }, SHOW_DELAY);
         }
     }
@@ -51,20 +61,53 @@ document.addEventListener('DOMContentLoaded', function () {
         pending = Math.max(0, pending - 1);
         if (pending === 0) {
             if (showTimer) { clearTimeout(showTimer); showTimer = null; }
+            if (maxTimer) { clearTimeout(maxTimer); maxTimer = null; }
             el.classList.remove('is-active');
         }
+    }
+
+    function forceHide() {
+        maxTimer = null;
+        pending = 0;
+        el.classList.remove('is-active');
     }
 
     window.StanrayLoader = { show: show, hide: hide };
 
     // WooCommerce cart/checkout/coupon/mini-cart AJAX all run through
-    // jQuery, so this one hook covers every WC interaction site-wide.
+    // jQuery. ajaxStart/ajaxStop would also cover this, but they fire for
+    // *every* jQuery AJAX request on the page — including WordPress's
+    // Heartbeat API and any other plugin's background polling — which
+    // dims the whole screen for things the user never triggered. Filter
+    // to known-noisy background requests instead.
     if (window.jQuery) {
-        window.jQuery(document).on('ajaxStart', show).on('ajaxStop', hide);
+        var $ = window.jQuery;
+        function isBackgroundRequest(settings) {
+            var url = (settings && settings.url) || '';
+            // WooCommerce's cart-fragments.js self-syncs on page load
+            // whenever its cached fragments are missing or stale (new
+            // session, cache >24h old, cross-tab hash mismatch) — nothing
+            // the visitor did, so it shouldn't dim the whole screen.
+            if (url.indexOf('get_refreshed_fragments') !== -1) return true;
+
+            var data = settings && settings.data;
+            if (typeof data === 'string') return /(^|&)action=heartbeat(&|$)/.test(data);
+            if (data && typeof data === 'object') return data.action === 'heartbeat';
+            return false;
+        }
+        $(document).on('ajaxSend', function (e, jqXHR, settings) {
+            if (!isBackgroundRequest(settings)) show();
+        });
+        $(document).on('ajaxComplete', function (e, jqXHR, settings) {
+            if (!isBackgroundRequest(settings)) hide();
+        });
     }
 
     // Native (non-AJAX) form posts — these fully reload the page, so we
     // only need to show the overlay; the new page load clears it for us.
+    // If the submission gets blocked after this fires (client-side
+    // validation elsewhere calling preventDefault), the MAX_DURATION
+    // safety net above is what clears it instead.
     var NATIVE_FORM_SELECTORS = [
         '.contact-form',
         '.woocommerce-form-login',
