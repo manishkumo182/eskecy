@@ -28,6 +28,8 @@ do_action( 'woocommerce_before_add_to_cart_form' ); ?>
 
 	<?php else : ?>
 
+		<div class="pdp-variation-alert" role="alert" aria-live="polite"></div>
+
 		<div class="variations pdp-variations">
 			<?php foreach ( $attributes as $attribute_name => $options ) :
 				$attr_id       = sanitize_title( $attribute_name );

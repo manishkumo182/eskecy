@@ -1380,6 +1380,20 @@ section.woocommerce-customer-details {
 .summary.entry-summary .price ins .woocommerce-Price-amount { color: var(--color-accent); }
 
 /* ── VARIATION PILLS (Size / Volume) ──────────────────────────── */
+.pdp-variation-alert {
+    display: none;
+    align-items: center;
+    gap: var(--space-sm);
+    padding: var(--space-sm) var(--space-md);
+    margin-bottom: var(--space-md);
+    font-size: var(--font-size-sm);
+    line-height: 1.4;
+    color: var(--color-black);
+    background: var(--color-gray-100);
+    border-left: 3px solid var(--color-error);
+    border-radius: 6px;
+}
+.pdp-variation-alert.is-visible { display: flex; }
 .pdp-variations { margin-bottom: var(--space-lg); }
 .pdp-variation { margin-bottom: var(--space-md); }
 .pdp-variation__head { margin-bottom: var(--space-sm); }

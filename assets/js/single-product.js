@@ -40,6 +40,7 @@
                 $pills.removeClass('is-active');
                 $pill.addClass('is-active');
                 $select.val($pill.data('value')).trigger('change');
+                $('.pdp-variation-alert').removeClass('is-visible');
             });
 
             // Reflect external changes (e.g. "Clear" link) back onto the pills.

@@ -125,6 +125,54 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 })();
 
+/* ── NATIVE alert() → STYLED TOAST ────────────────────────────────
+   WooCommerce core falls back to the browser's native alert() dialog
+   in a few places — most visibly add-to-cart-variation.js's "please
+   select some product options" / "this variation is unavailable"
+   checks on a variable product's Add to Cart button. That native
+   dialog looks completely out of place next to the rest of the
+   site's styled UI. Route it through the same toast notice system
+   WooCommerce's own notices already use here (#stanray-toast),
+   matching the exact <ul class="woocommerce-error"> markup so the
+   existing notice styling applies unchanged. Installed as early as
+   possible so it's in place before any later script's alert() call —
+   window.alert is looked up fresh at call time, so load order
+   relative to other scripts doesn't matter, only timing relative to
+   the user's first interaction. */
+(function () {
+    if (!window.jQuery) return;
+    var nativeAlert = window.alert;
+
+    window.alert = function (message) {
+        // On a variable-product page, the only thing that ever calls
+        // alert() is the pill variation selector below — show it right
+        // there instead of a corner toast the visitor may not notice
+        // next to the very field it's about.
+        var $inline = jQuery('.pdp-variation-alert');
+        if ($inline.length) {
+            $inline.text(message).addClass('is-visible');
+            return;
+        }
+
+        var $wrap = jQuery('#stanray-toast');
+        if (!$wrap.length) { nativeAlert(message); return; }
+
+        var $toast = jQuery('<ul class="woocommerce-error" role="alert"><li></li></ul>');
+        $toast.find('li').text(message);
+        $toast.append('<button type="button" class="stanray-toast__close" aria-label="Dismiss">&times;</button>');
+        $wrap.append($toast);
+
+        requestAnimationFrame(function () { $toast.addClass('is-visible'); });
+
+        var dismiss = function () {
+            $toast.removeClass('is-visible').addClass('is-leaving');
+            setTimeout(function () { $toast.remove(); }, 250);
+        };
+        $toast.on('click', '.stanray-toast__close', dismiss);
+        setTimeout(dismiss, 5000);
+    };
+})();
+
 /* ── CART FRAGMENTS ───────────────────────────────────────────────
    Shared by every place that changes the cart (add, quantity change,
    remove) so they all sync the header badge AND the mini-cart drawer
