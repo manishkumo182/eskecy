@@ -942,8 +942,17 @@ button[name="add-to-cart"] {
 }
 .ovo-card__price {
     font-size: 1rem;
-    font-weight: 500;
     color: var(--color-black);
+}
+bdi {
+    font-size: 1rem;
+}
+span.woocommerce-Price-currencySymbol {
+    font-weight: 600!important;
+    font-size: 1rem;
+}
+span.woocommerce-Price-amount.amount {
+    font-size: 1rem!important;
 }
 .ovo-card__price .price { color: inherit; }
 .ovo-card__price .price del { color: var(--color-gray-400); margin-right: 0.3rem; }
