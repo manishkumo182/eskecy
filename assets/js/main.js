@@ -90,6 +90,15 @@ document.addEventListener('DOMContentLoaded', function () {
             // the visitor did, so it shouldn't dim the whole screen.
             if (url.indexOf('get_refreshed_fragments') !== -1) return true;
 
+            // Classic checkout.js fires update_order_review itself the
+            // moment the checkout page loads (init_checkout -> update_
+            // checkout), to calculate shipping/tax — again before the
+            // visitor has done anything. It already gets its own scoped
+            // loading state (WooCommerce blocks the order-review table
+            // directly), so the full-screen overlay on top of that is
+            // redundant, and jarring on page entry specifically.
+            if (url.indexOf('update_order_review') !== -1) return true;
+
             var data = settings && settings.data;
             if (typeof data === 'string') return /(^|&)action=heartbeat(&|$)/.test(data);
             if (data && typeof data === 'object') return data.action === 'heartbeat';
