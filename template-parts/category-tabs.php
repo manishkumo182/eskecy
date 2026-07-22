@@ -146,11 +146,11 @@ if ( empty($tab_products) ) return;
             return btn;
         }
 
-        pager.appendChild(makeBtn('Prev', currentPage - 1, false, currentPage === 1));
+        pager.appendChild(makeBtn('←', currentPage - 1, false, currentPage === 1));
         for (var p = 1; p <= totalPages; p++) {
             pager.appendChild(makeBtn(String(p), p, p === currentPage, false));
         }
-        pager.appendChild(makeBtn('Next', currentPage + 1, false, currentPage === totalPages));
+        pager.appendChild(makeBtn('→', currentPage + 1, false, currentPage === totalPages));
     }
 
     function renderPage() {
