@@ -7,6 +7,26 @@
 
 if ( ! defined( 'ABSPATH' ) ) exit;
 
+// ─── CURRENCY SYMBOL: use literal "Rs" text instead of the ₨ glyph ────────────
+// WooCommerce's default NPR symbol is the single Unicode character ₨ (U+20A8).
+// In this theme's fonts it renders as a fused R+s shape with no letter-gap of
+// its own — letter-spacing can't open a gap inside one character. Using the
+// literal two-letter text "Rs" instead makes it real, spaceable characters.
+add_filter( 'woocommerce_currency_symbol', function( $currency_symbol, $currency ) {
+    if ( 'NPR' === $currency ) {
+        return 'Rs';
+    }
+    return $currency_symbol;
+}, 10, 2 );
+
+// ─── VARIATION "MAKE A SELECTION" MESSAGE ─────────────────────────────────────
+// Overrides WooCommerce's default variation-selection prompt (shown when the
+// customer clicks Add to Cart before picking a size on a variable product).
+add_filter( 'wc_add_to_cart_variation_params', function( $params ) {
+    $params['i18n_make_a_selection_text'] = 'Please select which size and item you would like to add to your cart.';
+    return $params;
+} );
+
 // ─── REMOVE DEFAULT WC WRAPPERS ───────────────────────────────────────────────
 remove_action( 'woocommerce_before_main_content', 'woocommerce_output_content_wrapper', 10 );
 remove_action( 'woocommerce_after_main_content',  'woocommerce_output_content_wrapper_end', 10 );

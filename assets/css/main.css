@@ -1625,14 +1625,14 @@ ul.products li.product .onsale {
 .coming-soon-page__logo img { max-height: 40px; width: auto; }
 .coming-soon-page__eyebrow {
     display: block;
-    font-size: var(--font-size-xs);
+    font-size: var(--font-size-lg);
     letter-spacing: 0.14em;
     text-transform: uppercase;
     color: var(--color-accent);
     margin-bottom: var(--space-md);
 }
 .coming-soon-page__title {
-    font-family: var(--font-display);
+    font-family: var(--font-body);
     font-size: var(--font-size-2xl);
     font-weight: 500;
     margin-bottom: var(--space-20);
@@ -3716,6 +3716,12 @@ justify-content: space-between;
     color: inherit;
     font-size: inherit;
     font-weight: inherit;
+}
+
+/* WooCommerce prints the currency symbol as "Rs" with the two letters flush against
+   each other (no letter-spacing of its own) — this opens up a gap between R and s. */
+.dt__btn-cart .woocommerce-Price-currencySymbol {
+    letter-spacing: 0.15em;
 }
 
 .dt__btn-cart:hover {
