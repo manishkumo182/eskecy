@@ -39,7 +39,7 @@ do_action( 'woocommerce_before_lost_password_form' );
                 <?php wp_nonce_field( 'lost_password', 'woocommerce-lost-password-nonce' ); ?>
 
                 <button type="submit" class="stanray-btn stanray-btn--full">
-                    <?php esc_html_e( 'Send Reset Link', 'woocommerce' ); ?>
+                    <?php esc_html_e( 'Reset', 'woocommerce' ); ?>
                 </button>
 
                 <a href="<?php echo esc_url( wc_get_page_permalink( 'myaccount' ) ); ?>" class="stanray-auth__back">
