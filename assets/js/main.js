@@ -382,7 +382,19 @@ function stanrayFetchCartFragments(callback) {
         stanrayUpdateCartIcon(fragments);
         // Open mini cart on add
         openMiniCart();
-        stanrayFlushNotices();
+        // The notices fragment (see woocommerce_add_to_cart_fragments in
+        // inc/woocommerce.php) already rode along on this same response —
+        // render straight from it instead of firing a second admin-ajax.php
+        // round trip via stanrayFlushNotices(). Check for key presence, not
+        // truthiness: an empty string is a legitimate "no notices queued"
+        // answer from the server and still means no second request is
+        // needed — only its *absence* means the fragment never arrived and
+        // we should fall back to fetching separately (defensive only).
+        if (fragments && 'stanray_notices_html' in fragments) {
+            stanrayRenderNoticeToasts(fragments.stanray_notices_html);
+        } else {
+            stanrayFlushNotices();
+        }
     });
 
     /* ── PRODUCT GALLERY: keyboard nav ──────────────────────────── */
@@ -476,32 +488,41 @@ function stanrayFetchCartFragments(callback) {
    notices in the session but there's no page reload to display them.
    Flush + render them as toasts immediately instead of letting them
    pile up until the next full page load (e.g. My Account). */
+function stanrayRenderNoticeToasts(html) {
+    var $wrap = jQuery('#stanray-toast');
+    if (!html || !$wrap.length) return;
+
+    var $toasts = jQuery(jQuery.parseHTML(html))
+        .filter('.woocommerce-message, .woocommerce-error, .woocommerce-info');
+
+    $toasts.each(function() {
+        var $toast = jQuery(this);
+        $toast.append('<button type="button" class="stanray-toast__close" aria-label="Dismiss">&times;</button>');
+        $wrap.append($toast);
+
+        requestAnimationFrame(function() { $toast.addClass('is-visible'); });
+
+        var dismiss = function() {
+            $toast.removeClass('is-visible').addClass('is-leaving');
+            setTimeout(function() { $toast.remove(); }, 250);
+        };
+        $toast.on('click', '.stanray-toast__close', dismiss);
+        setTimeout(dismiss, 5000);
+    });
+}
+
+/* Used by flows that don't already have notice HTML in hand (mini-cart qty
+   change, remove-item) — those still need their own admin-ajax.php round
+   trip since they don't go through WooCommerce's add-to-cart fragments
+   response. added_to_cart itself no longer calls this — see above. */
 function stanrayFlushNotices() {
     var ajaxUrl = (window.stanrayData && stanrayData.ajaxUrl) || '';
     var nonce   = (window.stanrayData && stanrayData.nonce) || '';
-    var $wrap   = jQuery('#stanray-toast');
-    if (!ajaxUrl || !$wrap.length) return;
+    if (!ajaxUrl) return;
 
     jQuery.get(ajaxUrl, { action: 'stanray_flush_notices', nonce: nonce }, function(response) {
         if (!response || !response.success || !response.data || !response.data.html) return;
-
-        var $toasts = jQuery(jQuery.parseHTML(response.data.html))
-            .filter('.woocommerce-message, .woocommerce-error, .woocommerce-info');
-
-        $toasts.each(function() {
-            var $toast = jQuery(this);
-            $toast.append('<button type="button" class="stanray-toast__close" aria-label="Dismiss">&times;</button>');
-            $wrap.append($toast);
-
-            requestAnimationFrame(function() { $toast.addClass('is-visible'); });
-
-            var dismiss = function() {
-                $toast.removeClass('is-visible').addClass('is-leaving');
-                setTimeout(function() { $toast.remove(); }, 250);
-            };
-            $toast.on('click', '.stanray-toast__close', dismiss);
-            setTimeout(dismiss, 5000);
-        });
+        stanrayRenderNoticeToasts(response.data.html);
     });
 }
 

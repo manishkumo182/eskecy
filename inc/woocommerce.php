@@ -266,6 +266,18 @@ function stanray_cart_count() {
 add_filter( 'woocommerce_add_to_cart_fragments', function( $fragments ) {
     $count = WC()->cart->get_cart_contents_count();
     $fragments['.cart-icon__count'] = '<span class="cart-icon__count">' . esc_html( $count ) . '</span>';
+
+    // Ride the notice HTML along on this same fragments response instead of
+    // making the browser fire a second, separate admin-ajax.php round trip
+    // (stanray_flush_notices) just to fetch it — see stanrayFlushNotices()
+    // in main.js. That second hit is what was making the "Added to cart"
+    // toast take so long to appear on hosts where admin-ajax.php is slow.
+    if ( function_exists( 'wc_print_notices' ) ) {
+        ob_start();
+        wc_print_notices();
+        $fragments['stanray_notices_html'] = ob_get_clean();
+    }
+
     return $fragments;
 } );
 
