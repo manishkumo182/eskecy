@@ -64,6 +64,18 @@ add_action( 'woocommerce_before_shop_loop_item_title', function() {
     }
 }, 5 );
 
+// ─── WISHLIST: per-user storage ───────────────────────────────────────────────
+// Account-only feature (see eskecy_toggle_wishlist_handler below) — stored
+// against the user's own account, not a cookie. A cookie is scoped to the
+// browser, not the account, so a second person logging into the same browser
+// would otherwise inherit whoever's session set it last.
+function eskecy_get_wishlist( $user_id = 0 ) {
+    $user_id  = $user_id ?: get_current_user_id();
+    if ( ! $user_id ) return [];
+    $wishlist = get_user_meta( $user_id, '_eskecy_wishlist', true );
+    return is_array( $wishlist ) ? $wishlist : [];
+}
+
 // ─── PRODUCT CARD: WISHLIST BUTTON ────────────────────────────────────────────
 // Hooked before woocommerce_template_loop_product_link_open (priority 10) so the
 // button renders as a sibling of the loop link, not nested inside its
@@ -71,8 +83,8 @@ add_action( 'woocommerce_before_shop_loop_item_title', function() {
 add_action( 'woocommerce_before_shop_loop_item', function() {
     global $product;
     $product_id = $product->get_id();
-    $wishlist   = isset( $_COOKIE['eskecy_wishlist'] ) ? json_decode( stripslashes( $_COOKIE['eskecy_wishlist'] ), true ) : [];
-    $in_wish    = is_array( $wishlist ) && in_array( $product_id, $wishlist );
+    $wishlist   = eskecy_get_wishlist();
+    $in_wish    = in_array( $product_id, $wishlist );
     $icon       = $in_wish ? '♥' : '♡';
     $cls        = $in_wish ? ' is-wished' : '';
     $label      = $in_wish ? 'Remove from Wishlist' : 'Save to Wishlist';
@@ -135,9 +147,9 @@ add_action( 'woocommerce_single_product_summary', function() {
     if ( ! $product ) return;
     $product_id = $product->get_id();
 
-    // Check if already in wishlist (stored in session via AJAX)
-    $wishlist   = isset( $_COOKIE['eskecy_wishlist'] ) ? json_decode( stripslashes( $_COOKIE['eskecy_wishlist'] ), true ) : [];
-    $in_wish    = is_array( $wishlist ) && in_array( $product_id, $wishlist );
+    // Check if already in wishlist
+    $wishlist   = eskecy_get_wishlist();
+    $in_wish    = in_array( $product_id, $wishlist );
     $icon       = $in_wish ? '♥' : '♡';
     $label      = $in_wish ? 'Remove from Wishlist' : 'Save to Wishlist';
     $state_cls  = $in_wish ? ' is-wished' : '';
@@ -158,8 +170,7 @@ add_action( 'woocommerce_single_product_summary', function() {
 
 // ─── WISHLIST: Render the full wishlist page ──────────────────────────────────
 add_shortcode( 'eskecy_wishlist', function() {
-    $wishlist   = isset( $_COOKIE['eskecy_wishlist'] ) ? json_decode( stripslashes( $_COOKIE['eskecy_wishlist'] ), true ) : [];
-    $wishlist   = is_array( $wishlist ) ? array_filter( array_map( 'absint', $wishlist ) ) : [];
+    $wishlist   = array_filter( array_map( 'absint', eskecy_get_wishlist() ) );
 
     if ( empty( $wishlist ) ) {
         return '<div class="wishlist-empty"><p>Your wishlist is empty.</p><a href="' . esc_url( wc_get_page_permalink('shop') ) . '" class="btn btn--primary">Shop Now</a></div>';
@@ -210,8 +221,8 @@ function eskecy_toggle_wishlist_handler() {
     $product_id = absint( $_POST['product_id'] ?? 0 );
     if ( ! $product_id ) wp_send_json_error();
 
-    $wishlist = isset( $_COOKIE['eskecy_wishlist'] ) ? json_decode( stripslashes( $_COOKIE['eskecy_wishlist'] ), true ) : [];
-    $wishlist = is_array( $wishlist ) ? $wishlist : [];
+    $user_id  = get_current_user_id();
+    $wishlist = eskecy_get_wishlist( $user_id );
 
     if ( in_array( $product_id, $wishlist ) ) {
         $wishlist = array_values( array_diff( $wishlist, [ $product_id ] ) );
@@ -221,7 +232,7 @@ function eskecy_toggle_wishlist_handler() {
         $action     = 'added';
     }
 
-    setcookie( 'eskecy_wishlist', json_encode( $wishlist ), time() + ( 30 * DAY_IN_SECONDS ), COOKIEPATH, COOKIE_DOMAIN, is_ssl(), false );
+    update_user_meta( $user_id, '_eskecy_wishlist', $wishlist );
 
     wp_send_json_success([
         'action'  => $action,
@@ -241,8 +252,7 @@ add_action( 'wp_enqueue_scripts', function() {
 // ─── HEADER: Wishlist icon count ──────────────────────────────────────────────
 // Inject wishlist count into header actions via hook in header.php
 add_action( 'stanray_header_actions', function() {
-    $wishlist = isset( $_COOKIE['eskecy_wishlist'] ) ? json_decode( stripslashes( $_COOKIE['eskecy_wishlist'] ), true ) : [];
-    $count    = is_array( $wishlist ) ? count( $wishlist ) : 0;
+    $count = count( eskecy_get_wishlist() );
     echo '<a href="' . esc_url( home_url('/wishlist') ) . '" class="header-wishlist" aria-label="Wishlist (' . $count . ' items)">';
     echo '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>';
     if ( $count > 0 ) echo '<span class="header-wishlist__count">' . absint( $count ) . '</span>';

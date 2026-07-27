@@ -80,8 +80,7 @@ get_header();
                     ?>
 
                     <?php
-                    $wl_cookie = isset( $_COOKIE['eskecy_wishlist'] ) ? json_decode( stripslashes( $_COOKIE['eskecy_wishlist'] ), true ) : [];
-                    $in_wish   = is_array( $wl_cookie ) && in_array( get_the_ID(), $wl_cookie );
+                    $in_wish = in_array( get_the_ID(), eskecy_get_wishlist() );
                     ?>
                     <div class="product-card">
                         <a href="<?php the_permalink(); ?>">

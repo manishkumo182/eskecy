@@ -21,8 +21,8 @@ $colour_count  = stanray_get_colour_count( $product );
 
 /* Wishlist state */
 $product_id = $product->get_id();
-$wishlist   = isset( $_COOKIE['eskecy_wishlist'] ) ? json_decode( stripslashes( $_COOKIE['eskecy_wishlist'] ), true ) : [];
-$in_wish    = is_array( $wishlist ) && in_array( $product_id, $wishlist );
+$wishlist   = eskecy_get_wishlist();
+$in_wish    = in_array( $product_id, $wishlist );
 
 /* Grab primary + hover image */
 $main_img_id  = $product->get_image_id();

@@ -66,8 +66,7 @@ if ( empty($tab_products) ) return;
                     }
                 }
 
-                $wl_cookie = isset( $_COOKIE['eskecy_wishlist'] ) ? json_decode( stripslashes( $_COOKIE['eskecy_wishlist'] ), true ) : [];
-                $in_wish   = is_array( $wl_cookie ) && in_array( $product_id, $wl_cookie );
+                $in_wish = in_array( $product_id, eskecy_get_wishlist() );
             ?>
             <article class="product-card cat-tabs__card"
                      data-cats="<?php echo esc_attr( implode( ' ', $cat_slugs ) ); ?>"
