@@ -1209,12 +1209,12 @@ body.is-order-received .page-content { padding-block: var(--space-lg) var(--spac
     gap: var(--space-lg);
     list-style: none;
 }
-.address-card {
+.woocommerce-customer-details .woocommerce-column {
     border: 1px solid var(--color-gray-200);
     padding: var(--space-lg);
     height: 100%;
 }
-.address-card .woocommerce-column__title {
+.woocommerce-column__title {
     font-size: var(--font-size-xs);
     text-transform: uppercase;
     letter-spacing: var(--letter-spacing);
@@ -1222,13 +1222,13 @@ body.is-order-received .page-content { padding-block: var(--space-lg) var(--spac
     margin-bottom: var(--space-md);
     color: var(--color-black);
 }
-.address-card address {
+.woocommerce-customer-details address {
     font-style: normal;
     font-size: var(--font-size-sm);
     line-height: 1.8;
     color: var(--color-gray-600);
 }
-.address-card address p { margin: 0; }
+.woocommerce-customer-details address p { margin: 0; }
 
 /* ── Continue shopping / view order actions ──────────────────── */
 .thankyou-actions {

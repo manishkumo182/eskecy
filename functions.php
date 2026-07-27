@@ -72,28 +72,38 @@ function stanray_enqueue_assets() {
         null
     );
 
+    // Versioned by the file's own mtime rather than the static STANRAY_VERSION
+    // constant, so a cache-busting URL change happens automatically on every
+    // edit — no separate step to remember, and no stale cached CSS/JS left
+    // behind on hosts (e.g. LiteSpeed Cache) that key their cache off the URL.
+    $theme_dir = get_template_directory();
+    $asset_ver = function ( $rel_path ) use ( $theme_dir ) {
+        $full_path = $theme_dir . $rel_path;
+        return file_exists( $full_path ) ? filemtime( $full_path ) : STANRAY_VERSION;
+    };
+
     // Main CSS
-    wp_enqueue_style( 'stanray-main', STANRAY_URI . '/assets/css/main.css?v1', [ 'stanray-fonts' ], STANRAY_VERSION );
+    wp_enqueue_style( 'stanray-main', STANRAY_URI . '/assets/css/main.css', [ 'stanray-fonts' ], $asset_ver( '/assets/css/main.css' ) );
 
     // Hero + Header CSS
-    wp_enqueue_style( 'stanray-hero-header', STANRAY_URI . '/assets/css/hero-header.css?v1', [ 'stanray-main' ], STANRAY_VERSION );
+    wp_enqueue_style( 'stanray-hero-header', STANRAY_URI . '/assets/css/hero-header.css', [ 'stanray-main' ], $asset_ver( '/assets/css/hero-header.css' ) );
 
     // Top Marquee Bar CSS
-    wp_enqueue_style( 'stanray-marquee-bar', STANRAY_URI . '/assets/css/marquee-bar.css?v1', [ 'stanray-main' ], STANRAY_VERSION );
+    wp_enqueue_style( 'stanray-marquee-bar', STANRAY_URI . '/assets/css/marquee-bar.css', [ 'stanray-main' ], $asset_ver( '/assets/css/marquee-bar.css' ) );
 
     // WooCommerce CSS — only on WC pages
     if ( function_exists( 'is_woocommerce' ) && ( is_woocommerce() || is_cart() || is_checkout() || is_account_page() ) ) {
-        wp_enqueue_style( 'stanray-woo', STANRAY_URI . '/assets/css/woocommerce.css?v1', [ 'stanray-main' ], STANRAY_VERSION );
+        wp_enqueue_style( 'stanray-woo', STANRAY_URI . '/assets/css/woocommerce.css', [ 'stanray-main' ], $asset_ver( '/assets/css/woocommerce.css' ) );
     }
 
     // Account CSS — on account pages, and everywhere for guests (powers the
     // wishlist login modal, which reuses the same Login/Register markup).
     if ( is_account_page() || ! is_user_logged_in() ) {
-        wp_enqueue_style( 'stanray-account', STANRAY_URI . '/assets/css/account.css?v1', [ 'stanray-main' ], STANRAY_VERSION );
+        wp_enqueue_style( 'stanray-account', STANRAY_URI . '/assets/css/account.css', [ 'stanray-main' ], $asset_ver( '/assets/css/account.css' ) );
     }
 
     // Main JS
-    wp_enqueue_script( 'stanray-main', STANRAY_URI . '/assets/js/main.js', [ 'jquery' ], STANRAY_VERSION, true );
+    wp_enqueue_script( 'stanray-main', STANRAY_URI . '/assets/js/main.js', [ 'jquery' ], $asset_ver( '/assets/js/main.js' ), true );
 
     // WooCommerce cart fragments
     if ( class_exists( 'WooCommerce' ) ) {
@@ -986,4 +996,33 @@ add_action( 'save_post_eskecy_review', function( $post_id ) {
         update_post_meta( $post_id, '_review_quote', sanitize_textarea_field( $_POST['review_quote'] ) );
     }
 } );
+
+/**
+ * The Homepage Sections admin pages (Hero Banner, Select Your Style, Shop
+ * the Look, Homepage Video, Events Hero) all save straight to wp_options via
+ * plain update_option() calls. None of that goes through a post save or any
+ * other hook a page cache normally watches, so on a host running LiteSpeed
+ * Cache (or similar), an editor's change sits behind the cached page —
+ * invisible on the front end — until the cache happens to expire or get
+ * purged for an unrelated reason. Purge on save so edits show up immediately.
+ */
+add_action( 'updated_option', 'stanray_maybe_purge_cache_for_option' );
+add_action( 'added_option', 'stanray_maybe_purge_cache_for_option' );
+function stanray_maybe_purge_cache_for_option( $option ) {
+    $prefixes = [
+        'stanray_hb_',  // Hero Banner
+        'stanray_sys_', // Select Your Style
+        'stanray_sb_',  // Shop the Look
+        'stanray_hv_',  // Homepage Video
+        'stanray_eh_',  // Events Hero
+    ];
+    foreach ( $prefixes as $prefix ) {
+        if ( strpos( $option, $prefix ) === 0 ) {
+            if ( has_action( 'litespeed_purge_all' ) ) {
+                do_action( 'litespeed_purge_all' );
+            }
+            return;
+        }
+    }
+}
 

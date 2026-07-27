@@ -99,9 +99,21 @@ document.addEventListener('DOMContentLoaded', function () {
             // redundant, and jarring on page entry specifically.
             if (url.indexOf('update_order_review') !== -1) return true;
 
+            // stanray_flush_notices runs unprompted on nearly every page
+            // load (see the DOMContentLoaded handler below) to cover the
+            // full-page-cache case where a cached response couldn't show a
+            // per-visitor notice — the visitor didn't trigger it, so it
+            // shouldn't dim the whole screen right as the page loads.
+            if (url.indexOf('action=stanray_flush_notices') !== -1) return true;
+
             var data = settings && settings.data;
-            if (typeof data === 'string') return /(^|&)action=heartbeat(&|$)/.test(data);
-            if (data && typeof data === 'object') return data.action === 'heartbeat';
+            if (typeof data === 'string') {
+                return /(^|&)action=heartbeat(&|$)/.test(data) ||
+                    /(^|&)action=stanray_flush_notices(&|$)/.test(data);
+            }
+            if (data && typeof data === 'object') {
+                return data.action === 'heartbeat' || data.action === 'stanray_flush_notices';
+            }
             return false;
         }
         $(document).on('ajaxSend', function (e, jqXHR, settings) {
@@ -526,6 +538,51 @@ function stanrayFlushNotices() {
     });
 }
 
+/* Same close-button + 5s auto-dismiss treatment as the STATIC WC NOTICES
+   block below, but for HTML arriving over AJAX rather than already being
+   in the page — used by the full-page-cache fallback (see DOMContentLoaded
+   below) so the notice lands in the same in-page spot a server-rendered one
+   would (right after the breadcrumb), instead of the floating corner toast
+   the other AJAX flows use. */
+function stanrayInsertInlineNotice(html) {
+    var $notices = jQuery(jQuery.parseHTML(html))
+        .filter('.woocommerce-message, .woocommerce-error, .woocommerce-info');
+    if (!$notices.length) return;
+
+    var $anchor = jQuery('.breadcrumb').first();
+
+    $notices.each(function () {
+        var $notice = jQuery(this);
+        $notice.data('stanray-enhanced', true);
+        $notice.css('transition', 'opacity 0.25s ease');
+        $notice.append('<button type="button" class="stanray-notice-close" aria-label="Dismiss">&times;</button>');
+
+        if ($anchor.length) {
+            $anchor.after($notice);
+        } else {
+            jQuery('#page, main, body').first().prepend($notice);
+        }
+
+        var dismiss = function () {
+            $notice.css('opacity', 0);
+            setTimeout(function () { $notice.remove(); }, 250);
+        };
+        $notice.on('click', '.stanray-notice-close', dismiss);
+        setTimeout(dismiss, 5000);
+    });
+}
+
+function stanrayFlushNoticesInline() {
+    var ajaxUrl = (window.stanrayData && stanrayData.ajaxUrl) || '';
+    var nonce   = (window.stanrayData && stanrayData.nonce) || '';
+    if (!ajaxUrl) return;
+
+    jQuery.get(ajaxUrl, { action: 'stanray_flush_notices', nonce: nonce }, function(response) {
+        if (!response || !response.success || !response.data || !response.data.html) return;
+        stanrayInsertInlineNotice(response.data.html);
+    });
+}
+
 /* ── STATIC WC NOTICES (page-load, not AJAX) ─────────────────────
    The toast flow above (stanrayFlushNotices) only covers notices
    fetched over AJAX. Notices WooCommerce renders straight into the
@@ -535,9 +592,10 @@ function stanrayFlushNotices() {
    the visitor refreshed. Give them the same close button + 5s
    auto-dismiss instead. */
 document.addEventListener('DOMContentLoaded', function () {
-    jQuery('.woocommerce-message, .woocommerce-error, .woocommerce-info')
-        .not('#stanray-toast, #stanray-toast *')
-        .each(function () {
+    var $serverNotices = jQuery('.woocommerce-message, .woocommerce-error, .woocommerce-info')
+        .not('#stanray-toast, #stanray-toast *');
+
+    $serverNotices.each(function () {
             var $notice = jQuery(this);
             if ($notice.data('stanray-enhanced')) return;
             $notice.data('stanray-enhanced', true);
@@ -552,6 +610,20 @@ document.addEventListener('DOMContentLoaded', function () {
             $notice.on('click', '.stanray-notice-close', dismiss);
             setTimeout(dismiss, 5000);
         });
+
+    // Add-to-cart on the single-product page redirects back to this same
+    // product URL (see woocommerce_add_to_cart_redirect in inc/woocommerce.php),
+    // and a full-page cache (LiteSpeed etc.) can legitimately serve that
+    // request a previously-cached copy of the page — cached HTML can never
+    // contain the notice WooCommerce actually queued in this visitor's
+    // session, since that's per-visitor state, not part of the shared page.
+    // If nothing was server-rendered, ask over AJAX (uncached, hits PHP
+    // directly) whether the session is actually holding a notice this
+    // cached response just couldn't show. Inline (not the corner toast) so
+    // it lands where a server-rendered notice normally would.
+    if ($serverNotices.length === 0) {
+        stanrayFlushNoticesInline();
+    }
 });
 
 document.addEventListener("DOMContentLoaded", function () {
