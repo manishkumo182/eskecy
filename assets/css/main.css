@@ -1605,7 +1605,14 @@ ul.products li.product .onsale {
     font-size: 16px;
 }
 .stanray-toast__close:hover { opacity: 1; }
-
+mark.order-number {
+    font-weight: 600;
+    background-color: transparent;
+}
+mark.order-date {
+     font-weight: 600;
+    background-color: transparent;
+}
 @media (max-width: 480px) {
     .stanray-toast { left: var(--space-md); right: var(--space-md); width: auto; }
 }
@@ -2577,6 +2584,42 @@ justify-content: space-between;
     color: var(--color-white);
 }
 .review-popup-modal__submit:hover { background: var(--color-gray-800); }
+
+/* ── GLOBAL CONFIRM MODAL — replaces native confirm() ────────────── */
+.stanray-confirm-modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: var(--z-modal);
+    align-items: center;
+    justify-content: center;
+}
+.stanray-confirm-modal.is-open { display: flex; }
+.stanray-confirm-modal__overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    backdrop-filter: blur(4px);
+}
+.stanray-confirm-modal__box {
+    position: relative;
+    z-index: 1;
+    background: var(--color-white);
+    padding: var(--space-40);
+    max-width: 400px;
+    width: 90%;
+    text-align: center;
+}
+.stanray-confirm-modal__message {
+    font-size: var(--font-size-base);
+    color: var(--color-black);
+    margin-bottom: var(--space-24);
+}
+.stanray-confirm-modal__actions {
+    display: flex;
+    gap: var(--space-md);
+}
+.stanray-confirm-modal__actions .stanray-btn { flex: 1; }
 .review-popup-modal__submit:disabled { opacity: 0.6; cursor: default; }
 .review-popup-modal__thanks {
     font-family: var(--font-display);

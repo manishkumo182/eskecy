@@ -169,6 +169,19 @@
     <div class="stanray-loader__spinner"></div>
 </div>
 
+<!-- Global Confirm Modal — replaces native confirm() for any link/button
+     marked class="js-confirm" (optionally data-confirm-message="…") -->
+<div class="stanray-confirm-modal" id="stanray-confirm-modal" role="dialog" aria-modal="true" aria-label="<?php esc_attr_e( 'Confirm action', 'stanray-custom' ); ?>">
+    <div class="stanray-confirm-modal__overlay"></div>
+    <div class="stanray-confirm-modal__box">
+        <p class="stanray-confirm-modal__message" id="stanray-confirm-modal__message"></p>
+        <div class="stanray-confirm-modal__actions">
+            <button type="button" class="stanray-btn stanray-btn--ghost" id="stanray-confirm-modal__cancel"><?php esc_html_e( 'Cancel', 'stanray-custom' ); ?></button>
+            <button type="button" class="stanray-btn" id="stanray-confirm-modal__ok"><?php esc_html_e( 'Confirm', 'stanray-custom' ); ?></button>
+        </div>
+    </div>
+</div>
+
 <!-- WhatsApp Floating Button -->
 <?php $wa = get_theme_mod( 'social_whatsapp' ); if ( $wa ) : ?>
 <a href="https://wa.me/<?php echo esc_attr( preg_replace( '/[^0-9]/', '', $wa ) ); ?>"

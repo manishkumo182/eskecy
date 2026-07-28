@@ -3,6 +3,18 @@
    All WooCommerce page / component styles
    ============================================================ */
 
+/* ── REQUIRED FIELD MARKER ────────────────────────────────────── */
+.required { color: var(--color-error); }
+
+/* "Have a coupon?" bar — the whole row toggles the coupon field (see
+   main.js), not just the small "Click here..." link, so it needs to read
+   as clickable everywhere, not only over that link. */
+.woocommerce-form-coupon-toggle { cursor: pointer; }
+
+/* scrollIntoView() would otherwise land this right under the fixed site
+   header, hiding it behind it. */
+.stanray-validation-notice { scroll-margin-top: calc(var(--header-height) + var(--space-md)); }
+
 /* ── SHOP LAYOUT ─────────────────────────────────────────────── */
 /* .woo-main { padding-block: var(--space-xl); } */
 
@@ -271,12 +283,19 @@ button[name="add-to-cart"] {
     border-radius: 6px;
     list-style: none;
 }
-.woocommerce-message { border-color: var(--color-success); }
+/* Success ("added to cart") notice — black background for stronger visibility. */
+.woocommerce-message {
+    color: var(--color-white);
+    background: var(--color-black);
+    border-color: var(--color-success);
+}
 .woocommerce-error   { border-color: var(--color-error); }
 .woocommerce-info    { border-color: #4a70a0; }
 
 .woocommerce-error li { flex: 1; list-style: none; padding: 0; }
 
+/* margin-inline-start:auto pulls this (and the close × after it) over to
+   the right edge together, instead of floating alone mid-bar. */
 .woocommerce-message a.button,
 .woocommerce-error a.button,
 .woocommerce-info a.button,
@@ -284,6 +303,7 @@ button[name="add-to-cart"] {
 .woocommerce-error a.restore-item,
 .woocommerce-info a.restore-item {
     flex-shrink: 0;
+    margin-inline-start: auto;
     font-family: var(--font-body);
     font-size: 10px;
     letter-spacing: 0.1em;
@@ -869,6 +889,9 @@ button[name="add-to-cart"] {
     color: #fff;
     transform: translateY(4px);
     transition: transform 200ms ease;
+}
+form.checkout.woocommerce-checkout {
+    padding-top: 0px!important;
 }
 .ovo-card:hover .ovo-card__cta { transform: translateY(0); }
 

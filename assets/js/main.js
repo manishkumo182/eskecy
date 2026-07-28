@@ -146,6 +146,142 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 })();
 
+/* ── NATIVE confirm() → STYLED MODAL ──────────────────────────────
+   Any <a> or <button class="js-confirm"> (optional data-confirm-message)
+   shows the shared #stanray-confirm-modal instead of the browser's native
+   confirm() dialog. Links navigate to their href on confirm; buttons/
+   submit inputs get a synthetic click re-dispatched with a one-time bypass
+   flag so this handler doesn't just intercept itself again. */
+(function () {
+    var modal = document.getElementById('stanray-confirm-modal');
+    if (!modal) return;
+
+    var messageEl = document.getElementById('stanray-confirm-modal__message');
+    var cancelBtn = document.getElementById('stanray-confirm-modal__cancel');
+    var okBtn     = document.getElementById('stanray-confirm-modal__ok');
+    var DEFAULT_MESSAGE = 'Are you sure?';
+    var pendingEl = null;
+
+    function open(trigger) {
+        pendingEl = trigger;
+        messageEl.textContent = trigger.dataset.confirmMessage || DEFAULT_MESSAGE;
+        modal.classList.add('is-open');
+    }
+
+    function close() {
+        modal.classList.remove('is-open');
+        pendingEl = null;
+    }
+
+    document.addEventListener('click', function (e) {
+        var trigger = e.target.closest('.js-confirm');
+        if (!trigger || trigger.dataset.confirmBypass) return;
+        e.preventDefault();
+        open(trigger);
+    });
+
+    cancelBtn.addEventListener('click', close);
+    modal.querySelector('.stanray-confirm-modal__overlay').addEventListener('click', close);
+    document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape' && modal.classList.contains('is-open')) close();
+    });
+
+    okBtn.addEventListener('click', function () {
+        var trigger = pendingEl;
+        close();
+        if (!trigger) return;
+
+        if (trigger.tagName === 'A') {
+            window.location.href = trigger.href;
+        } else {
+            trigger.dataset.confirmBypass = '1';
+            trigger.click();
+            delete trigger.dataset.confirmBypass;
+        }
+    });
+})();
+
+/* ── ADDRESS BOOK: required validation + styled message ────────────
+   woocommerce_form_field() marks required fields with aria-required and
+   a "validate-required" class on the wrapping <p>, not the native
+   `required` attribute — it expects WC's own checkout.js to enforce that
+   class, but checkout.js only binds to form.checkout, never this custom
+   form.saved-address form. Copy the signal onto a real `required`
+   attribute so the browser blocks submission itself, then suppress the
+   browser's own unstyled bubble in favour of an inline error notice placed
+   right above the page heading — same spot WooCommerce's own error notices
+   land after a real page reload (see stanray_handle_save_address_form's
+   wc_add_notice() fallback for a bypassed submit), so both paths read the
+   same way instead of one being a corner toast and the other inline. */
+(function () {
+    var form = document.querySelector('.stanray-address-form');
+    if (!form) return;
+
+    var $heading = window.jQuery && jQuery('.stanray-page-header').first();
+
+    var requiredFields = [];
+    form.querySelectorAll('.validate-required').forEach(function (wrap) {
+        var field = wrap.querySelector('input, select, textarea');
+        if (!field) return;
+        field.required = true;
+        requiredFields.push(field);
+    });
+
+    // The form's own "submit" event never fires at all when a required
+    // field is empty — that's how native validation blocks submission — so
+    // "invalid" (fired once per invalid field, right when submit is
+    // attempted) is the only hook available. All of them fire synchronously
+    // in one batch; a zero-delay timeout lets them all land before building
+    // one combined message instead of one notice per field.
+    var noticeScheduled = false;
+    function showValidationNotice() {
+        if (noticeScheduled) return;
+        noticeScheduled = true;
+        setTimeout(function () {
+            noticeScheduled = false;
+            var invalidFields = requiredFields.filter(function (field) { return !field.checkValidity(); });
+            if (!invalidFields.length) return;
+
+            var labels = invalidFields.map(function (field) {
+                var wrap = field.closest('.form-row');
+                var labelEl = wrap && wrap.querySelector('label');
+                return labelEl ? labelEl.textContent.replace(/\s*\*\s*$/, '').trim() : field.name;
+            });
+
+            if ($heading && $heading.length && typeof stanrayInsertInlineNotice === 'function') {
+                // Repeated clicks on a still-invalid form would otherwise stack
+                // an identical notice above the last one every time — drop any
+                // validation notice already showing before adding the new one.
+                jQuery('.stanray-validation-notice').remove();
+                stanrayInsertInlineNotice(
+                    '<ul class="woocommerce-error stanray-validation-notice" role="alert"><li>' +
+                    'Please fill in the required fields: ' + labels.join(', ') +
+                    '</li></ul>',
+                    $heading,
+                    'before'
+                );
+                // Scroll to the notice itself, not the heading — the notice
+                // sits above the heading, so scrolling to the heading would
+                // push the notice up out of view instead of showing it.
+                var notice = document.querySelector('.stanray-validation-notice');
+                if (notice) notice.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+
+            // preventScroll: focusing the field would otherwise silently
+            // re-scroll the page right back down to it, undoing the scroll
+            // to the notice above.
+            invalidFields[0].focus({ preventScroll: true });
+        }, 0);
+    }
+
+    requiredFields.forEach(function (field) {
+        field.addEventListener('invalid', function (e) {
+            e.preventDefault();
+            showValidationNotice();
+        });
+    });
+})();
+
 /* ── NATIVE alert() → STYLED TOAST ────────────────────────────────
    WooCommerce core falls back to the browser's native alert() dialog
    in a few places — most visibly add-to-cart-variation.js's "please
@@ -544,12 +680,18 @@ function stanrayFlushNotices() {
    below) so the notice lands in the same in-page spot a server-rendered one
    would (right after the breadcrumb), instead of the floating corner toast
    the other AJAX flows use. */
-function stanrayInsertInlineNotice(html) {
+function stanrayInsertInlineNotice(html, $customAnchor, position) {
     var $notices = jQuery(jQuery.parseHTML(html))
         .filter('.woocommerce-message, .woocommerce-error, .woocommerce-info');
     if (!$notices.length) return;
 
-    var $anchor = jQuery('.breadcrumb').first();
+    // Default caller (page-load notice fallback below) has no anchor of its
+    // own — drop it after the breadcrumb, same as always. A caller that
+    // passes its own anchor (e.g. the address-book validation error, which
+    // wants to land above a specific page heading rather than a breadcrumb)
+    // gets that instead.
+    var $anchor = ($customAnchor && $customAnchor.length) ? $customAnchor : jQuery('.breadcrumb').first();
+    position = ($customAnchor && $customAnchor.length) ? (position || 'before') : 'after';
 
     $notices.each(function () {
         var $notice = jQuery(this);
@@ -558,7 +700,7 @@ function stanrayInsertInlineNotice(html) {
         $notice.append('<button type="button" class="stanray-notice-close" aria-label="Dismiss">&times;</button>');
 
         if ($anchor.length) {
-            $anchor.after($notice);
+            $anchor[position]($notice);
         } else {
             jQuery('#page, main, body').first().prepend($notice);
         }
@@ -912,6 +1054,51 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 })();
+
+// ── ORDER PAGE: "Write a Review" (re-queue + reload) ─────────────────────────
+// Re-queues the pending-review meta for this product/order (see
+// stanray_start_manual_review in inc/ajax.php), then reloads — the existing
+// post-purchase review modal above already renders+opens itself whenever
+// that meta is present, so a plain reload is all that's needed to reuse it
+// rather than duplicating its star-rating/submit logic here.
+document.addEventListener('click', function (e) {
+    var btn = e.target.closest('.js-write-review');
+    if (!btn) return;
+
+    btn.disabled = true;
+    var originalText = btn.textContent;
+    btn.textContent = 'Loading…';
+
+    var formData = new FormData();
+    formData.append('action', 'stanray_start_manual_review');
+    formData.append('nonce', btn.dataset.nonce);
+    formData.append('product_id', btn.dataset.productId);
+    formData.append('order_id', btn.dataset.orderId);
+
+    if (window.StanrayLoader) window.StanrayLoader.show();
+    fetch(stanrayData.ajaxUrl, { method: 'POST', body: formData, credentials: 'same-origin' })
+        .then(function (r) { return r.json(); })
+        .then(function (res) {
+            if (res.success) {
+                window.location.reload();
+                return;
+            }
+            btn.disabled = false;
+            btn.textContent = originalText;
+            if (window.jQuery && typeof stanrayRenderNoticeToasts === 'function') {
+                stanrayRenderNoticeToasts(
+                    '<ul class="woocommerce-error" role="alert"><li>' +
+                    ((res.data && res.data.message) || 'Something went wrong. Please try again.') +
+                    '</li></ul>'
+                );
+            }
+        })
+        .catch(function () {
+            btn.disabled = false;
+            btn.textContent = originalText;
+        })
+        .finally(function () { if (window.StanrayLoader) window.StanrayLoader.hide(); });
+});
 
 // ── OVO SHOP: AJAX PAGINATION + SORT & FILTER DRAWER ─────────────────────────
 (function () {
@@ -1473,6 +1660,20 @@ document.addEventListener('DOMContentLoaded', function () {
         toggle.querySelector('.stanray-toggle-password__icon-eye-off').hidden = !isHidden;
     });
 })();
+
+// ── CHECKOUT: "Have a coupon?" — whole bar clickable ─────────────────────────
+// WC's own form-coupon.php wires the toggle to only the small "Click here to
+// enter your code" link (checkout.js binds its click handler to a.showcoupon
+// specifically) — the rest of the "Have a coupon?" bar does nothing when
+// clicked. Forward any click elsewhere in the bar to that link instead of
+// overriding the whole core template just to touch this.
+document.addEventListener('click', function (e) {
+    var bar = e.target.closest('.woocommerce-form-coupon-toggle');
+    if (!bar || e.target.closest('a.showcoupon')) return;
+    e.preventDefault();
+    var link = bar.querySelector('a.showcoupon');
+    if (link) link.click();
+});
 
 // ── CHECKOUT ADDRESS PICKER ───────────────────────────────────────────────────
 // Picking a saved card only fills the same billing_*/shipping_* inputs core's

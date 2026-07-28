@@ -46,7 +46,7 @@ $type_label = 'billing' === $type ? __( 'Billing', 'stanray-custom' ) : __( 'Shi
     </h2>
 </div>
 
-<form method="post" novalidate class="stanray-address-form">
+<form method="post" class="stanray-address-form">
 
     <div class="woocommerce-address-fields stanray-form-section">
 

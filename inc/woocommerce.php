@@ -19,6 +19,54 @@ add_filter( 'woocommerce_currency_symbol', function( $currency_symbol, $currency
     return $currency_symbol;
 }, 10, 2 );
 
+// ─── NEPAL: "Province" not "State / Zone" ──────────────────────────────────
+// WC core hardcodes NP's state field label as "State / Zone" — a holdover
+// from Nepal's pre-2015 administrative zones. The country's been organised
+// into 7 provinces since the new constitution, so relabel it.
+add_filter( 'woocommerce_get_country_locale', function( $locale ) {
+    $locale['NP']['state']['label'] = __( 'Province', 'stanray-custom' );
+    return $locale;
+} );
+
+// WC has no built-in state list for Nepal, so the field falls back to free
+// text (anyone can type anything, e.g. the old zone names). Registering the
+// 7 provinces here — the country's real administrative divisions since the
+// 2015 constitution — turns it into a proper dropdown instead.
+add_filter( 'woocommerce_states', function( $states ) {
+    $states['NP'] = [
+        'Koshi'         => __( 'Koshi', 'stanray-custom' ),
+        'Madhesh'       => __( 'Madhesh', 'stanray-custom' ),
+        'Bagmati'       => __( 'Bagmati', 'stanray-custom' ),
+        'Gandaki'       => __( 'Gandaki', 'stanray-custom' ),
+        'Lumbini'       => __( 'Lumbini', 'stanray-custom' ),
+        'Karnali'       => __( 'Karnali', 'stanray-custom' ),
+        'Sudurpashchim' => __( 'Sudurpashchim', 'stanray-custom' ),
+    ];
+    return $states;
+} );
+
+// ─── ADDRESS: phone required ───────────────────────────────────────────────
+// Delivery riders here contact customers by phone, not email — make it a
+// required field instead of WC's optional default. WC_Countries::get_address_
+// fields() rebuilds billing_phone from scratch from the woocommerce_checkout_
+// phone_field option AFTER the generic woocommerce_default_address_fields
+// filter runs, silently overriding it — so that filter alone doesn't reach
+// billing_phone. woocommerce_billing_fields/woocommerce_shipping_fields run
+// last (same function), so force it there instead; this is what both the
+// classic checkout AND the address-book form (form-saved-address.php) read.
+add_filter( 'woocommerce_billing_fields', function( $fields ) {
+    if ( isset( $fields['billing_phone'] ) ) {
+        $fields['billing_phone']['required'] = true;
+    }
+    return $fields;
+} );
+add_filter( 'woocommerce_shipping_fields', function( $fields ) {
+    if ( isset( $fields['shipping_phone'] ) ) {
+        $fields['shipping_phone']['required'] = true;
+    }
+    return $fields;
+} );
+
 // ─── VARIATION "MAKE A SELECTION" MESSAGE ─────────────────────────────────────
 // Overrides WooCommerce's default variation-selection prompt (shown when the
 // customer clicks Add to Cart before picking a size on a variable product).
@@ -76,6 +124,14 @@ function eskecy_get_wishlist( $user_id = 0 ) {
     return is_array( $wishlist ) ? $wishlist : [];
 }
 
+// Same line-art heart used in the header nav (header.php) — reused everywhere
+// a wishlist toggle appears (product cards, PDP, wishlist page) instead of
+// the ♥/♡ Unicode glyphs previously used there, which render inconsistently
+// across platforms/fonts and looked out of place next to the header's icon.
+function eskecy_wishlist_heart_svg( $is_wished ) {
+    return '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="' . ( $is_wished ? 'currentColor' : 'none' ) . '" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>';
+}
+
 // ─── PRODUCT CARD: WISHLIST BUTTON ────────────────────────────────────────────
 // Hooked before woocommerce_template_loop_product_link_open (priority 10) so the
 // button renders as a sibling of the loop link, not nested inside its
@@ -85,7 +141,7 @@ add_action( 'woocommerce_before_shop_loop_item', function() {
     $product_id = $product->get_id();
     $wishlist   = eskecy_get_wishlist();
     $in_wish    = in_array( $product_id, $wishlist );
-    $icon       = $in_wish ? '♥' : '♡';
+    $icon       = eskecy_wishlist_heart_svg( $in_wish );
     $cls        = $in_wish ? ' is-wished' : '';
     $label      = $in_wish ? 'Remove from Wishlist' : 'Save to Wishlist';
     echo '<button
@@ -150,7 +206,7 @@ add_action( 'woocommerce_single_product_summary', function() {
     // Check if already in wishlist
     $wishlist   = eskecy_get_wishlist();
     $in_wish    = in_array( $product_id, $wishlist );
-    $icon       = $in_wish ? '♥' : '♡';
+    $icon       = eskecy_wishlist_heart_svg( $in_wish );
     $label      = $in_wish ? 'Remove from Wishlist' : 'Save to Wishlist';
     $state_cls  = $in_wish ? ' is-wished' : '';
 
@@ -191,7 +247,7 @@ add_shortcode( 'eskecy_wishlist', function() {
             data-nonce="' . esc_attr( wp_create_nonce('eskecy_wishlist') ) . '"
             aria-label="Remove from Wishlist"
             title="Remove from Wishlist"
-        >&#9829;</button>';
+        >' . eskecy_wishlist_heart_svg( true ) . '</button>';
         echo '</div>';
         echo '<div class="product-card__info">';
         echo '<h3 class="product-card__title"><a href="' . esc_url( $product->get_permalink() ) . '">' . esc_html( $product->get_name() ) . '</a></h3>';
@@ -306,6 +362,52 @@ add_filter( 'woocommerce_checkout_fields', function( $fields ) {
 // ─── CHECKOUT: Move coupon form from top of page to just above the Place Order button ──
 remove_action( 'woocommerce_before_checkout_form', 'woocommerce_checkout_coupon_form', 10 );
 add_action( 'woocommerce_review_order_before_submit', 'woocommerce_checkout_coupon_form', 10 );
+
+// ─── MY ACCOUNT: Order details — status as a colored badge in the table ───────
+// myaccount/view-order.php's opening line ("Order #X was placed on Y and is
+// currently Z.") buries the status as plain text. Drop that clause and show
+// it instead as a colored .stanray-status pill in the order totals table
+// (between Shipping and Total), matching how status already reads everywhere
+// else in the account area (order list, dashboard).
+add_filter( 'woocommerce_order_details_status', function( $text, $order ) {
+    return sprintf(
+        /* translators: 1: order number 2: order date */
+        esc_html__( 'Order #%1$s was placed on %2$s.', 'stanray-custom' ),
+        '<mark class="order-number">' . $order->get_order_number() . '</mark>',
+        '<mark class="order-date">' . wc_format_datetime( $order->get_date_created() ) . '</mark>'
+    );
+}, 10, 2 );
+
+add_filter( 'woocommerce_get_order_item_totals', function( $total_rows, $order ) {
+    if ( ! is_wc_endpoint_url( 'view-order' ) ) return $total_rows;
+
+    $status = $order->get_status();
+    $badge  = '<span class="stanray-status stanray-status--' . esc_attr( $status ) . '">'
+        . esc_html( wc_get_order_status_name( $status ) ) . '</span>';
+
+    $with_status = [];
+    foreach ( $total_rows as $key => $row ) {
+        $with_status[ $key ] = $row;
+        if ( 'shipping' === $key ) {
+            $with_status['stanray_status'] = [
+                'type'  => 'status',
+                'label' => __( 'Status:', 'stanray-custom' ),
+                'value' => $badge,
+            ];
+        }
+    }
+    // Order has no shipping row (e.g. no shipping method needed) — fall back
+    // to appending right before the total instead of losing the row entirely.
+    if ( ! isset( $with_status['stanray_status'] ) ) {
+        $position = array_search( 'order_total', array_keys( $with_status ), true );
+        $position = ( false === $position ) ? count( $with_status ) : $position;
+        $with_status = array_slice( $with_status, 0, $position, true )
+            + [ 'stanray_status' => [ 'type' => 'status', 'label' => __( 'Status:', 'stanray-custom' ), 'value' => $badge ] ]
+            + array_slice( $with_status, $position, null, true );
+    }
+
+    return $with_status;
+}, 10, 2 );
 
 // ─── THANK YOU / ORDER RECEIVED PAGE ──────────────────────────────────────────
 
@@ -694,6 +796,49 @@ add_filter( 'woocommerce_add_to_cart_redirect', function( $url, $product = null 
     }
     return ( $product instanceof WC_Product ) ? $product->get_permalink() : $url;
 }, 10, 2 );
+
+// "Buy Now" submits the exact same add-to-cart form as the regular button —
+// it just also redirects to checkout afterward (above) — so it was adding
+// this item to whatever's ALREADY in the cart, and checkout showed every
+// pre-existing item too, not just the one thing the customer meant to buy
+// right now. WC_Form_Handler::add_to_cart_action runs on wp_loaded @20, so
+// stash the existing cart and empty it here (@15, before that runs) so it
+// adds this item to a clean cart instead. Restored below once they're done
+// with checkout — either the order goes through, or they wander off
+// elsewhere without finishing it.
+add_action( 'wp_loaded', function() {
+    if ( empty( $_REQUEST['buy_now'] ) || empty( $_REQUEST['add-to-cart'] ) ) return;
+    if ( ! WC()->cart || WC()->cart->is_empty() ) return; // nothing to protect
+
+    $stashed = [];
+    foreach ( WC()->cart->get_cart() as $item ) {
+        $stashed[] = [
+            'product_id'   => $item['product_id'],
+            'quantity'     => $item['quantity'],
+            'variation_id' => $item['variation_id'],
+            'variation'    => $item['variation'],
+        ];
+    }
+
+    WC()->session->set( 'stanray_stashed_cart', $stashed );
+    WC()->cart->empty_cart( false ); // false: leave the persistent (cross-session) cart alone
+}, 15 );
+
+function stanray_restore_stashed_cart() {
+    if ( ! WC()->session ) return;
+    $stashed = WC()->session->get( 'stanray_stashed_cart' );
+    if ( ! $stashed ) return;
+
+    WC()->session->set( 'stanray_stashed_cart', null );
+    foreach ( $stashed as $item ) {
+        WC()->cart->add_to_cart( $item['product_id'], $item['quantity'], $item['variation_id'], $item['variation'] );
+    }
+}
+add_action( 'woocommerce_thankyou', 'stanray_restore_stashed_cart' );
+add_action( 'template_redirect', function() {
+    if ( is_checkout() ) return; // covers checkout + its endpoints (order-pay, order-received, ...)
+    stanray_restore_stashed_cart();
+}, 5 );
 
 add_action( 'admin_enqueue_scripts', function( $hook ) {
     if ( ! in_array( $hook, [ 'edit-tags.php', 'term.php' ], true ) ) return;

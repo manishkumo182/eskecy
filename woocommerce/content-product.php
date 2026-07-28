@@ -80,7 +80,7 @@ $hover_img_id = ! empty( $gallery_ids ) ? $gallery_ids[0] : 0;
             data-nonce="<?php echo esc_attr( wp_create_nonce( 'eskecy_wishlist' ) ); ?>"
             aria-label="<?php echo $in_wish ? 'Remove from Wishlist' : 'Save to Wishlist'; ?>"
             title="<?php echo $in_wish ? 'Remove from Wishlist' : 'Save to Wishlist'; ?>"
-        ><?php echo $in_wish ? '&#x2665;' : '&#x2661;'; ?></button>
+        ><?php echo eskecy_wishlist_heart_svg( $in_wish ); ?></button>
 
     </div>
 

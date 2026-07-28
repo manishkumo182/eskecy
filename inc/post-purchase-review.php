@@ -140,3 +140,48 @@ function stanray_render_post_purchase_review_modal() {
     </div>
     <?php
 }
+
+/**
+ * Standing "Write a Review" entry point on the order's own page — dismissing
+ * the popup above (Escape/×/"Maybe later"/overlay click, see
+ * stanray_dismiss_post_purchase_review in inc/ajax.php) deletes the pending-
+ * review meta for good, so that was the only chance to review at all. This
+ * re-queues the same meta on demand for anything in this order that's
+ * actually delivered and not yet reviewed, then reloads so the existing
+ * modal above picks it up exactly like the automatic prompt would.
+ */
+add_action( 'woocommerce_view_order', 'stanray_render_order_review_prompts' );
+function stanray_render_order_review_prompts( $order_id ) {
+    if ( ! is_user_logged_in() ) return;
+
+    $order = wc_get_order( $order_id );
+    if ( ! $order || ! $order->has_status( 'delivered' ) ) return;
+
+    $user_id = get_current_user_id();
+    if ( (int) $order->get_customer_id() !== $user_id ) return;
+
+    $reviewable = [];
+    foreach ( $order->get_items() as $item ) {
+        $product_id = $item->get_product_id();
+        $product    = $product_id ? wc_get_product( $product_id ) : null;
+        if ( ! $product || ! $product->is_visible() ) continue;
+        if ( stanray_user_has_reviewed( $product_id, $user_id ) ) continue;
+        $reviewable[ $product_id ] = $product;
+    }
+    if ( ! $reviewable ) return;
+    ?>
+    <div class="stanray-order-reviews">
+        <h3 class="stanray-order-reviews__title"><?php esc_html_e( 'Rate your purchase', 'stanray-custom' ); ?></h3>
+        <div class="stanray-order-reviews__list">
+            <?php foreach ( $reviewable as $product_id => $product ) : ?>
+                <button type="button"
+                    class="stanray-btn stanray-btn--ghost stanray-btn--xs js-write-review"
+                    data-product-id="<?php echo esc_attr( $product_id ); ?>"
+                    data-order-id="<?php echo esc_attr( $order_id ); ?>"
+                    data-nonce="<?php echo esc_attr( wp_create_nonce( 'stanray_nonce' ) ); ?>"
+                ><?php echo esc_html( sprintf( __( 'Write a review — %s', 'stanray-custom' ), $product->get_name() ) ); ?></button>
+            <?php endforeach; ?>
+        </div>
+    </div>
+    <?php
+}

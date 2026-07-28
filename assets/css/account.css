@@ -44,7 +44,7 @@
     letter-spacing: 0.2em;
     text-transform: uppercase;
     color: var(--color-gray-400);
-    margin: 0 0 var(--space-md);
+    margin: 1rem 0 var(--space-md);
     padding-bottom: var(--space-12);
     border-bottom: 1px solid var(--color-gray-200);
 }
@@ -168,9 +168,9 @@
     line-height: 1;
 }
 .stanray-btn:hover {
-    background: #f4f4f2;
+   background: #c0392b;
     border-color: #c9d1d93d;
-    color: #000;
+    color: #fff;
 }
 /* page.php's inline `.page-body a { color: var(--color-black); }` (specificity
    0,0,1,1) wraps the My Account page and outranks .stanray-btn alone
@@ -300,10 +300,11 @@
 
 .stanray-toggle-password {
     position: absolute;
-    top: 50%;
+    top: 34%;
     right: var(--space-sm);
     transform: translateY(-50%);
     display: flex;
+
     align-items: center;
     justify-content: center;
     width: 28px;
@@ -515,12 +516,16 @@
     font-weight: 400;
     color: var(--color-black);
     margin: 0 0 var(--space-xs);
+    padding-bottom:0px!important;
 }
-
+h2.stanray-dashboard__greeting {
+    margin-bottom: 0px!important;
+    margin-top:1rem!important;
+}
 .stanray-dashboard__email {
     font-family: var(--font-body);
-    font-size: 11px;
-    color: var(--color-gray-400);
+    font-size: 14px;
+    color: #c0392c;
     letter-spacing: 0.04em;
 }
 
@@ -559,7 +564,7 @@
 
 .stanray-stat__label {
     font-family: var(--font-body);
-    font-size: 9px;
+    font-size: 12px;
     letter-spacing: 0.18em;
     text-transform: uppercase;
     color: var(--color-gray-400);
@@ -585,7 +590,7 @@
     text-decoration: none;
     color: var(--color-gray-600);
     font-family: var(--font-body);
-    font-size: 9px;
+    font-size:12px;
     letter-spacing: 0.16em;
     text-transform: uppercase;
     transition: all var(--transition-fast);
@@ -607,6 +612,27 @@
     color: var(--color-error);
 }
 .stanray-quick-nav__item--danger:hover svg { color: var(--color-error); }
+
+/* "Write a Review" prompts on the order details page */
+.stanray-order-reviews {
+    margin-top: var(--space-lg);
+    padding-top: var(--space-lg);
+    border-top: 1px solid var(--color-gray-200);
+}
+.stanray-order-reviews__title {
+    font-family: var(--font-body);
+    font-size: var(--font-size-xs);
+    font-weight: 500;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--color-black);
+    margin: 0 0 var(--space-md);
+}
+.stanray-order-reviews__list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-sm);
+}
 
 /* Dashboard sections */
 .stanray-dashboard__section { margin-bottom: var(--space-lg); }
@@ -854,7 +880,8 @@
     border-radius: 0;
 }
 
-.stanray-status--completed {
+.stanray-status--completed,
+.stanray-status--delivered {
     color: var(--color-success);
     border-color: rgba(58,122,58,0.3);
     background: rgba(58,122,58,0.06);
@@ -1076,22 +1103,6 @@ h2.stanray-page-title {
     color: var(--color-gray-800);
     line-height: 1.8;
 }
-
-.woocommerce-Address a.edit,
-.woocommerce-Address .edit {
-    display: inline-block;
-    font-family: var(--font-body);
-    font-size: 10px;
-    font-weight: 500;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: var(--color-gray-600);
-    text-decoration: underline;
-    text-underline-offset: 3px;
-    margin-top: var(--space-md);
-    transition: color var(--transition-fast);
-}
-.woocommerce-Address a.edit:hover { color: var(--color-black); }
 
 /* ── Responsive ───────────────────────────────────────────── */
 @media (max-width: 900px) {

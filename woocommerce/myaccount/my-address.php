@@ -47,14 +47,14 @@ $sections    = $show_shipping
                             <?php echo esc_html( get_the_title( $post ) ); ?>
                             <?php if ( $is_default ) : ?><span class="stanray-status stanray-status--completed"><?php esc_html_e( 'Default', 'stanray-custom' ); ?></span><?php endif; ?>
                         </h3>
-                        <a href="<?php echo esc_url( $edit_url ); ?>" class="edit"><?php esc_html_e( 'Edit', 'stanray-custom' ); ?></a>
                     </header>
                     <address><?php echo wp_kses_post( stanray_format_address_html( $post->ID ) ); ?></address>
                     <div class="stanray-form-actions">
+                        <a href="<?php echo esc_url( $edit_url ); ?>" class="stanray-btn stanray-btn--ghost stanray-btn--xs"><?php esc_html_e( 'Edit', 'stanray-custom' ); ?></a>
                         <?php if ( ! $is_default ) : ?>
                             <a href="<?php echo esc_url( $default_url ); ?>" class="stanray-btn stanray-btn--ghost stanray-btn--xs"><?php esc_html_e( 'Set as default', 'stanray-custom' ); ?></a>
                         <?php endif; ?>
-                        <a href="<?php echo esc_url( $delete_url ); ?>" class="stanray-btn stanray-btn--ghost stanray-btn--xs" onclick="return confirm('<?php echo esc_js( __( 'Remove this address?', 'stanray-custom' ) ); ?>');"><?php esc_html_e( 'Delete', 'stanray-custom' ); ?></a>
+                        <a href="<?php echo esc_url( $delete_url ); ?>" class="stanray-btn stanray-btn--ghost stanray-btn--xs js-confirm" data-confirm-message="<?php esc_attr_e( 'Remove this address?', 'stanray-custom' ); ?>"><?php esc_html_e( 'Delete', 'stanray-custom' ); ?></a>
                     </div>
                 </div>
             <?php endforeach; ?>

@@ -22,7 +22,10 @@ do_action( 'woocommerce_before_reset_password_form' );
 
                 <div class="stanray-field">
                     <label for="password_1"><?php esc_html_e( 'New password', 'woocommerce' ); ?> <span class="required">*</span></label>
-                    <div class="stanray-input-wrap">
+                    <?php // "password-input" tells WC's own password-strength-meter.js to insert the
+                    // strength/hint text after this wrapper instead of inside it — otherwise the
+                    // absolutely-positioned show/hide icon re-centers on the now-taller wrapper. ?>
+                    <div class="stanray-input-wrap password-input">
                         <input
                             type="password"
                             class="stanray-input"
@@ -48,7 +51,7 @@ do_action( 'woocommerce_before_reset_password_form' );
 
                 <div class="stanray-field">
                     <label for="password_2"><?php esc_html_e( 'Re-enter new password', 'woocommerce' ); ?> <span class="required">*</span></label>
-                    <div class="stanray-input-wrap">
+                    <div class="stanray-input-wrap password-input">
                         <input
                             type="password"
                             class="stanray-input"

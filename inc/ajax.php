@@ -308,3 +308,39 @@ function stanray_dismiss_post_purchase_review() {
     wp_send_json_success();
 }
 add_action( 'wp_ajax_stanray_dismiss_post_purchase_review', 'stanray_dismiss_post_purchase_review' );
+
+/**
+ * "Write a Review" button on the order's own page (see
+ * stanray_render_order_review_prompts in inc/post-purchase-review.php) —
+ * re-queues the pending-review meta for a specific product on demand, then
+ * the page reload that follows lets the existing popup pick it up normally.
+ */
+function stanray_start_manual_review() {
+    check_ajax_referer( 'stanray_nonce', 'nonce' );
+    if ( ! is_user_logged_in() ) {
+        wp_send_json_error( [ 'message' => 'You must be logged in to leave a review.' ] );
+    }
+
+    $user_id    = get_current_user_id();
+    $order_id   = absint( $_POST['order_id'] ?? 0 );
+    $product_id = absint( $_POST['product_id'] ?? 0 );
+    $order      = wc_get_order( $order_id );
+
+    if ( ! $order || ! $order->has_status( 'delivered' ) || (int) $order->get_customer_id() !== $user_id ) {
+        wp_send_json_error( [ 'message' => 'Order not found.' ] );
+    }
+    if ( ! wc_customer_bought_product( $order->get_billing_email(), $user_id, $product_id ) ) {
+        wp_send_json_error( [ 'message' => 'This product was not part of your order.' ] );
+    }
+    if ( stanray_user_has_reviewed( $product_id, $user_id ) ) {
+        wp_send_json_error( [ 'message' => 'You already reviewed this product.' ] );
+    }
+
+    update_user_meta( $user_id, '_stanray_pending_review', [
+        'order_id'   => $order_id,
+        'product_id' => $product_id,
+    ] );
+
+    wp_send_json_success();
+}
+add_action( 'wp_ajax_stanray_start_manual_review', 'stanray_start_manual_review' );

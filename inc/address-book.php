@@ -260,7 +260,38 @@ function stanray_handle_save_address_form() {
     }
 
     $country = wc_clean( wp_unslash( $_POST['country'] ?? '' ) );
-    $fields  = [];
+
+    // The form has its own handler (not WC_Form_Handler::save_address(), see
+    // note above) and its own novalidate-free HTML5 required attributes —
+    // but a bypassed/JS-disabled submit skips those, so mirror the same
+    // required check server-side rather than trusting the browser alone.
+    $field_defs = WC()->countries->get_address_fields( $country, $type . '_' );
+    $missing    = [];
+    foreach ( $field_defs as $key => $field ) {
+        $unprefixed = substr( $key, strlen( $type ) + 1 );
+        $posted     = trim( wc_clean( wp_unslash( $_POST[ $unprefixed ] ?? '' ) ) );
+        if ( ! empty( $field['required'] ) && '' === $posted ) {
+            $missing[] = $field['label'] ?? $unprefixed;
+        }
+    }
+
+    if ( $missing ) {
+        wc_add_notice(
+            sprintf(
+                /* translators: %s: comma-separated list of missing field labels */
+                __( 'Please fill in the required fields: %s', 'stanray-custom' ),
+                implode( ', ', $missing )
+            ),
+            'error'
+        );
+        $back_url = $post_id
+            ? wc_get_endpoint_url( 'saved-address', $post_id, wc_get_page_permalink( 'myaccount' ) )
+            : add_query_arg( 'type', $type, wc_get_endpoint_url( 'saved-address', '', wc_get_page_permalink( 'myaccount' ) ) );
+        wp_safe_redirect( $back_url );
+        exit;
+    }
+
+    $fields = [];
     foreach ( stanray_address_field_keys( $type, $country ) as $key ) {
         $fields[ $key ] = isset( $_POST[ $key ] ) ? wc_clean( wp_unslash( $_POST[ $key ] ) ) : '';
     }

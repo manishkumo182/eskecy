@@ -100,7 +100,7 @@ get_header();
                             data-nonce="<?php echo esc_attr( wp_create_nonce('eskecy_wishlist') ); ?>"
                             aria-label="<?php echo $in_wish ? 'Remove from Wishlist' : 'Save to Wishlist'; ?>"
                             title="<?php echo $in_wish ? 'Remove from Wishlist' : 'Save to Wishlist'; ?>"
-                        ><?php echo $in_wish ? '&#x2665;' : '&#x2661;'; ?></button>
+                        ><?php echo eskecy_wishlist_heart_svg( $in_wish ); ?></button>
 
                         <!-- ✅ Add to cart -->
                         <div class="add-to-cart-btn">
