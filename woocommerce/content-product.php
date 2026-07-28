@@ -19,10 +19,13 @@ $is_new        = ( strtotime( $product->get_date_created() ) > strtotime( '-30 d
 $discount_pct  = stanray_get_discount_percent( $product );
 $colour_count  = stanray_get_colour_count( $product );
 
-/* Wishlist state */
+/* Wishlist state — always rendered "not wished". This template backs the
+   Shop archive and other cacheable product grids; baking this request's
+   session state in here would leak into the cached HTML for every other
+   visitor. main.js hydrates the real per-visitor state client-side after
+   load (see hydrateWishlistIcons). */
 $product_id = $product->get_id();
-$wishlist   = eskecy_get_wishlist();
-$in_wish    = in_array( $product_id, $wishlist );
+$in_wish    = false;
 
 /* Grab primary + hover image */
 $main_img_id  = $product->get_image_id();

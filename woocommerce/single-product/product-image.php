@@ -19,19 +19,22 @@ if ( empty( $all_ids ) ) {
 }
 
 $product_id = $product->get_id();
-$in_wish    = in_array( $product_id, eskecy_get_wishlist() );
-$wish_label = $in_wish ? 'Remove from Wishlist' : 'Save to Wishlist';
+// Single product pages are cacheable (not one of WC's auto-excluded My
+// Account/Cart/Checkout pages), so this always renders "not wished" —
+// baking in this request's session state would leak into the cached HTML
+// for every other visitor. main.js hydrates the real state client-side
+// after load (see hydrateWishlistIcons).
 ?>
 <div class="pdp-gallery" data-count="<?php echo esc_attr( count( $all_ids ) ); ?>">
 
     <div class="pdp-gallery__main">
         <button
-            class="product-card__wish pdp-gallery__wish<?php echo $in_wish ? ' is-wished' : ''; ?>"
+            class="product-card__wish pdp-gallery__wish"
             data-product-id="<?php echo esc_attr( $product_id ); ?>"
             data-nonce="<?php echo esc_attr( wp_create_nonce( 'eskecy_wishlist' ) ); ?>"
-            aria-label="<?php echo esc_attr( $wish_label ); ?>"
-            title="<?php echo esc_attr( $wish_label ); ?>"
-        ><?php echo eskecy_wishlist_heart_svg( $in_wish ); ?></button>
+            aria-label="Save to Wishlist"
+            title="Save to Wishlist"
+        ><?php echo eskecy_wishlist_heart_svg( false ); ?></button>
 
         <?php if ( count( $all_ids ) > 1 ) : ?>
         <button type="button" class="pdp-gallery__arrow pdp-gallery__arrow--prev" aria-label="<?php esc_attr_e( 'Previous image', 'stanray-custom' ); ?>">

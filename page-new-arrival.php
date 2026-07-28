@@ -80,7 +80,11 @@ get_header();
                     ?>
 
                     <?php
-                    $in_wish = in_array( get_the_ID(), eskecy_get_wishlist() );
+                    // Always "not wished" — this page is cacheable. Baking this
+                    // request's session state in here would leak into the cached
+                    // HTML for every other visitor. main.js hydrates the real
+                    // per-visitor state client-side after load (see hydrateWishlistIcons).
+                    $in_wish = false;
                     ?>
                     <div class="product-card">
                         <a href="<?php the_permalink(); ?>">

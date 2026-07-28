@@ -171,21 +171,21 @@ function eskecy_wishlist_heart_svg( $is_wished ) {
 // Hooked before woocommerce_template_loop_product_link_open (priority 10) so the
 // button renders as a sibling of the loop link, not nested inside its
 // overflow:hidden anchor — otherwise it gets visually clipped.
+// Always rendered as "not wished" — this hook fires on the Shop archive,
+// a page cache serves to every visitor. Baking in *this* request's session
+// wishlist state here would leak into the cached HTML and get shown to
+// every other visitor regardless of their own wishlist. main.js hydrates
+// the real per-visitor state client-side after load (see hydrateWishlistIcons).
 add_action( 'woocommerce_before_shop_loop_item', function() {
     global $product;
     $product_id = $product->get_id();
-    $wishlist   = eskecy_get_wishlist();
-    $in_wish    = in_array( $product_id, $wishlist );
-    $icon       = eskecy_wishlist_heart_svg( $in_wish );
-    $cls        = $in_wish ? ' is-wished' : '';
-    $label      = $in_wish ? 'Remove from Wishlist' : 'Save to Wishlist';
     echo '<button
-        class="product-card__wish' . $cls . '"
+        class="product-card__wish"
         data-product-id="' . esc_attr( $product_id ) . '"
         data-nonce="' . esc_attr( wp_create_nonce( 'eskecy_wishlist' ) ) . '"
-        aria-label="' . esc_attr( $label ) . '"
-        title="' . esc_attr( $label ) . '"
-    >' . $icon . '</button>';
+        aria-label="Save to Wishlist"
+        title="Save to Wishlist"
+    >' . eskecy_wishlist_heart_svg( false ) . '</button>';
 }, 5 );
 
 // ─── SINGLE PRODUCT: Rearrange summary hooks ──────────────────────────────────
@@ -286,6 +286,24 @@ add_shortcode( 'eskecy_wishlist', function() {
     return ob_get_clean();
 } );
 
+// ─── WISHLIST: AJAX get current visitor's IDs (for client-side hydration) ─────
+// Product cards, the PDP heart, and the header count badge are all rendered
+// "not wished" / zero server-side (see stanray_render_shop_grid and friends)
+// because those pages are page-cached — baking in a specific visitor's
+// wishlist there would leak into the cached HTML for everyone else. This
+// endpoint is what main.js's hydrateWishlistIcons() calls after page load
+// to fill in the real per-visitor state, since admin-ajax.php POST requests
+// are never themselves page-cached. No nonce required: this only reads the
+// current session's own data, same trust level as any other page view.
+add_action( 'wp_ajax_eskecy_get_wishlist_ids',        'eskecy_get_wishlist_ids_handler' );
+add_action( 'wp_ajax_nopriv_eskecy_get_wishlist_ids', 'eskecy_get_wishlist_ids_handler' );
+
+function eskecy_get_wishlist_ids_handler() {
+    wp_send_json_success( [
+        'ids' => array_values( array_map( 'absint', eskecy_get_wishlist() ) ),
+    ] );
+}
+
 // ─── WISHLIST: AJAX toggle ────────────────────────────────────────────────────
 add_action( 'wp_ajax_eskecy_toggle_wishlist',        'eskecy_toggle_wishlist_handler' );
 add_action( 'wp_ajax_nopriv_eskecy_toggle_wishlist', 'eskecy_toggle_wishlist_handler' );
@@ -354,11 +372,14 @@ add_action( 'wp_enqueue_scripts', function() {
 
 // ─── HEADER: Wishlist icon count ──────────────────────────────────────────────
 // Inject wishlist count into header actions via hook in header.php
+// Always rendered with no count/fill — header.php is part of every page,
+// including cacheable ones (Shop, Homepage, product pages), so baking this
+// request's session count in here would leak into the cached HTML the same
+// way the product-card hearts would. main.js hydrates the real per-visitor
+// count client-side after load (see hydrateWishlistIcons).
 add_action( 'stanray_header_actions', function() {
-    $count = count( eskecy_get_wishlist() );
-    echo '<a href="' . esc_url( home_url('/wishlist') ) . '" class="header-wishlist" aria-label="Wishlist (' . $count . ' items)">';
+    echo '<a href="' . esc_url( home_url('/wishlist') ) . '" class="header-wishlist" aria-label="Wishlist">';
     echo '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>';
-    if ( $count > 0 ) echo '<span class="header-wishlist__count">' . absint( $count ) . '</span>';
     echo '</a>';
 } );
 

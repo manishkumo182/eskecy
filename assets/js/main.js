@@ -1165,7 +1165,13 @@ document.addEventListener('click', function (e) {
                 if (!data.success) return;
                 var d = data.data;
 
-                if (grid) grid.innerHTML = d.html_grid || EMPTY_MSG;
+                if (grid) {
+                    grid.innerHTML = d.html_grid || EMPTY_MSG;
+                    // New cards render "not wished" server-side (see the PHP
+                    // comment in stanray_render_shop_grid) — fill in this
+                    // visitor's real wishlist state for them.
+                    if (window.hydrateWishlistIcons) window.hydrateWishlistIcons(grid);
+                }
                 if (pagination) pagination.innerHTML = d.pagination || '';
 
                 if (pushState) {
@@ -1357,6 +1363,68 @@ document.addEventListener('click', function (e) {
         }
     }
 
+    // Product cards, the PDP heart, and the header count badge are all
+    // rendered "not wished" / zero server-side, because those pages are
+    // page-cached (see the matching PHP comments in inc/woocommerce.php,
+    // content-product.php, etc.) — baking a specific visitor's wishlist into
+    // that HTML would leak into the cached copy served to everyone else.
+    // This fills in the real per-visitor state after the (cacheable, static)
+    // HTML has already loaded. Fetched once per page load and reused, since
+    // the toggle handler above already keeps the DOM in sync in real time
+    // after that; only fresh page loads / newly-injected AJAX content
+    // (Shop's Sort & Filter) need a hydration pass.
+    var wishlistIdsPromise = null;
+    function getWishlistIds() {
+        if (!wishlistIdsPromise) {
+            var ajaxUrl = (window.eskecyWishlist && window.eskecyWishlist.ajaxUrl) || (window.stanrayData && window.stanrayData.ajaxUrl);
+            if (!ajaxUrl) return Promise.resolve([]);
+            var formData = new FormData();
+            formData.append('action', 'eskecy_get_wishlist_ids');
+            wishlistIdsPromise = fetch(ajaxUrl, { method: 'POST', body: formData })
+                .then(function(r) { return r.json(); })
+                .then(function(data) { return (data.success && data.data.ids) || []; })
+                .catch(function() { return []; });
+        }
+        return wishlistIdsPromise;
+    }
+
+    function hydrateWishlistIcons(scope) {
+        scope = scope || document;
+        getWishlistIds().then(function(ids) {
+            if (ids.length) {
+                var idSet = {};
+                ids.forEach(function(id) { idSet[id] = true; });
+
+                scope.querySelectorAll('.product-card__wish[data-product-id], .wishlist-btn[data-product-id]').forEach(function(wb) {
+                    if (!idSet[wb.dataset.productId]) return;
+                    wb.classList.add('is-wished');
+                    wb.setAttribute('aria-label', 'Remove from Wishlist');
+                    wb.setAttribute('title', 'Remove from Wishlist');
+                    var label = wb.querySelector('.wishlist-btn__label');
+                    if (label) label.textContent = 'Remove from Wishlist';
+                });
+            }
+
+            // Header badge — only on the full-document pass, not partial
+            // re-hydrations after an AJAX grid swap (it's already correct).
+            if (scope === document) {
+                var countEl   = document.querySelector('.header-wishlist__count');
+                var heartLink = document.querySelector('.header-wishlist');
+                if (heartLink) heartLink.classList.toggle('has-items', ids.length > 0);
+                if (ids.length && !countEl && heartLink) {
+                    var span = document.createElement('span');
+                    span.className = 'header-wishlist__count';
+                    span.textContent = ids.length;
+                    heartLink.appendChild(span);
+                } else if (countEl) {
+                    countEl.textContent = ids.length;
+                    countEl.style.display = ids.length > 0 ? 'flex' : 'none';
+                }
+            }
+        });
+    }
+    window.hydrateWishlistIcons = hydrateWishlistIcons;
+
     function toggleWishlist(productId, nonce, ajaxUrl) {
         var formData = new FormData();
         formData.append('action', 'eskecy_toggle_wishlist');
@@ -1383,6 +1451,8 @@ document.addEventListener('click', function (e) {
     }
 
     document.addEventListener('DOMContentLoaded', function() {
+        hydrateWishlistIcons(document);
+
         loginModal = document.getElementById('wishlist-login-modal');
 
         if (loginModal) {

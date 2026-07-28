@@ -66,7 +66,12 @@ if ( empty($tab_products) ) return;
                     }
                 }
 
-                $in_wish = in_array( $product_id, eskecy_get_wishlist() );
+                // Always "not wished" — this section renders on the homepage,
+                // a cacheable page. Baking this request's session state in
+                // here would leak into the cached HTML for every other
+                // visitor. main.js hydrates the real per-visitor state
+                // client-side after load (see hydrateWishlistIcons).
+                $in_wish = false;
             ?>
             <article class="product-card cat-tabs__card"
                      data-cats="<?php echo esc_attr( implode( ' ', $cat_slugs ) ); ?>"
