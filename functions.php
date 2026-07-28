@@ -219,6 +219,7 @@ require_once STANRAY_DIR . '/inc/order-status-delivered.php';
 require_once STANRAY_DIR . '/inc/post-purchase-review.php';
 require_once STANRAY_DIR . '/inc/wishlist-login-modal.php';
 require_once STANRAY_DIR . '/inc/address-book.php';
+require_once STANRAY_DIR . '/inc/account-reset-link-expiration.php';
 
 
 // ─── BODY CLASSES ─────────────────────────────────────────────────────────────
@@ -629,6 +630,11 @@ add_action( 'woocommerce_save_account_details', function ( $user_id ) {
     if ( ! empty( $_POST['billing_phone'] ) ) {
         update_user_meta( $user_id, 'billing_phone', sanitize_text_field( $_POST['billing_phone'] ) );
     }
+} );
+
+add_filter( 'woocommerce_save_account_details_required_fields', function ( $fields ) {
+    $fields['billing_phone'] = __( 'Phone number', 'stanray-custom' );
+    return $fields;
 } );
 
 function new_arrival_styles() {

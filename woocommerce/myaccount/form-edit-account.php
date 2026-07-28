@@ -81,7 +81,7 @@ $phone        = get_user_meta( $user->ID, 'billing_phone', true );
 
             <!-- Custom: Phone -->
             <div class="stanray-field">
-                <label for="account_phone">Phone Number</label>
+                <label for="account_phone">Phone Number <span class="required">*</span></label>
                 <input
                     type="tel"
                     class="stanray-input"
