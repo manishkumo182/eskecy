@@ -28,10 +28,17 @@ function stanray_init_qr_payment_gateway() {
 
     class WC_Gateway_QR_Payment extends WC_Payment_Gateway {
 
+        const PROOF_MAX_SIZE = 5242880; // 5MB
+        const PROOF_MIMES    = [
+            'jpg|jpeg' => 'image/jpeg',
+            'png'      => 'image/png',
+            'pdf'      => 'application/pdf',
+        ];
+
         public function __construct() {
             $this->id                 = 'qr_payment';
             $this->icon               = '';
-            $this->has_fields         = false;
+            $this->has_fields         = true;
             $this->method_title       = 'Scan to Pay (QR)';
             $this->method_description = 'Let customers pay by scanning a QR code (eSewa/bank/wallet). The order is held until you manually confirm payment was received.';
 
@@ -131,6 +138,26 @@ function stanray_init_qr_payment_gateway() {
                     echo '<img src="' . esc_url( $img_url ) . '" alt="' . esc_attr__( 'QR Code', 'stanray-custom' ) . '" style="max-width:220px;margin-top:10px;display:block;" />';
                 }
             }
+
+            // The file itself is uploaded separately via AJAX (see
+            // stanray_handle_qr_payment_proof_upload()) because WooCommerce's
+            // checkout submission serializes the form with jQuery .serialize(),
+            // which silently drops <input type="file"> values. Only the
+            // resulting attachment ID (a plain hidden field) travels with the
+            // actual "Place order" submission.
+            ?>
+            <p class="form-row form-row-wide qr-payment-proof-field" style="margin-top:12px;">
+                <label for="qr_payment_proof">
+                    <?php esc_html_e( 'Upload payment screenshot or PDF', 'stanray-custom' ); ?>&nbsp;<span class="required">*</span>
+                </label>
+                <input type="file" id="qr_payment_proof" accept=".jpg,.jpeg,.png,.pdf,image/jpeg,image/png,application/pdf" />
+                <input type="hidden" id="qr_payment_proof_id" name="qr_payment_proof_id" value="" />
+                <input type="hidden" id="qr_payment_proof_nonce" value="<?php echo esc_attr( wp_create_nonce( 'qr_payment_proof_upload' ) ); ?>" />
+                <span id="qr_payment_proof_status" class="description" style="display:block;font-size:12px;margin-top:4px;">
+                    <?php esc_html_e( 'JPG, PNG, or PDF. Max 5MB.', 'stanray-custom' ); ?>
+                </span>
+            </p>
+            <?php
         }
 
         public function thankyou_page( $order_id ) {
@@ -156,6 +183,13 @@ function stanray_init_qr_payment_gateway() {
         public function process_payment( $order_id ) {
             $order = wc_get_order( $order_id );
 
+            $attachment_id = stanray_get_verified_qr_proof_attachment();
+            if ( $attachment_id ) {
+                update_post_meta( $attachment_id, '_qr_payment_order_id', $order_id );
+                $order->update_meta_data( '_qr_payment_proof_id', $attachment_id );
+                $order->save();
+            }
+
             if ( $order->get_total() > 0 ) {
                 $order->update_status( 'on-hold', __( 'Awaiting QR payment confirmation.', 'stanray-custom' ) );
             } else {
@@ -170,6 +204,191 @@ function stanray_init_qr_payment_gateway() {
             ];
         }
     }
+}
+
+// Ties an uploaded proof attachment to whoever uploaded it (guest session hash
+// or logged-in user ID), so the checkout hidden field can't be tampered with
+// to reference another customer's uploaded file.
+function stanray_get_qr_payment_session_token() {
+    if ( function_exists( 'WC' ) && WC()->session ) {
+        $id = WC()->session->get_customer_id();
+        if ( $id ) {
+            return (string) $id;
+        }
+    }
+    return (string) get_current_user_id();
+}
+
+// Reads & validates the attachment ID the checkout form submitted, confirming
+// it was uploaded by the current shopper and isn't already tied to another order.
+function stanray_get_verified_qr_proof_attachment() {
+    $attachment_id = ! empty( $_POST['qr_payment_proof_id'] ) ? absint( $_POST['qr_payment_proof_id'] ) : 0;
+
+    if ( ! $attachment_id || get_post_type( $attachment_id ) !== 'attachment' ) {
+        return 0;
+    }
+
+    if ( get_post_meta( $attachment_id, '_qr_payment_session', true ) !== stanray_get_qr_payment_session_token() ) {
+        return 0;
+    }
+
+    if ( get_post_meta( $attachment_id, '_qr_payment_order_id', true ) ) {
+        return 0;
+    }
+
+    return $attachment_id;
+}
+
+// Handles the out-of-band upload triggered when the shopper picks a file.
+// Registered for both logged-in and guest checkouts.
+add_action( 'wp_ajax_stanray_qr_payment_proof_upload', 'stanray_handle_qr_payment_proof_upload' );
+add_action( 'wp_ajax_nopriv_stanray_qr_payment_proof_upload', 'stanray_handle_qr_payment_proof_upload' );
+function stanray_handle_qr_payment_proof_upload() {
+    if ( ! check_ajax_referer( 'qr_payment_proof_upload', 'nonce', false ) ) {
+        wp_send_json_error( [ 'message' => __( 'Security check failed. Please refresh the page and try again.', 'stanray-custom' ) ] );
+    }
+
+    if ( empty( $_FILES['file']['name'] ) ) {
+        wp_send_json_error( [ 'message' => __( 'No file received.', 'stanray-custom' ) ] );
+    }
+
+    $file = $_FILES['file'];
+
+    if ( ! empty( $file['error'] ) && $file['error'] !== UPLOAD_ERR_OK ) {
+        wp_send_json_error( [ 'message' => __( 'Upload failed. Please try again.', 'stanray-custom' ) ] );
+    }
+
+    if ( $file['size'] > WC_Gateway_QR_Payment::PROOF_MAX_SIZE ) {
+        wp_send_json_error( [ 'message' => __( 'File is too large. Maximum size is 5MB.', 'stanray-custom' ) ] );
+    }
+
+    // Checks the real file content (not just the extension/declared type), so a
+    // renamed .php or .exe can't slip through as a "PNG".
+    $filetype = wp_check_filetype_and_ext( $file['tmp_name'], $file['name'], WC_Gateway_QR_Payment::PROOF_MIMES );
+    if ( empty( $filetype['ext'] ) || empty( $filetype['type'] ) ) {
+        wp_send_json_error( [ 'message' => __( 'File must be a JPG, PNG, or PDF.', 'stanray-custom' ) ] );
+    }
+
+    require_once ABSPATH . 'wp-admin/includes/file.php';
+    require_once ABSPATH . 'wp-admin/includes/image.php';
+    require_once ABSPATH . 'wp-admin/includes/media.php';
+
+    $attachment_id = media_handle_upload( 'file', 0, [], [
+        'test_form' => false,
+        'mimes'     => WC_Gateway_QR_Payment::PROOF_MIMES,
+    ] );
+
+    if ( is_wp_error( $attachment_id ) ) {
+        wp_send_json_error( [ 'message' => __( 'Upload failed. Please try again.', 'stanray-custom' ) ] );
+    }
+
+    update_post_meta( $attachment_id, '_qr_payment_session', stanray_get_qr_payment_session_token() );
+
+    wp_send_json_success( [ 'attachment_id' => $attachment_id ] );
+}
+
+// Wires up the file input on the checkout page to upload immediately on
+// selection (see comment in payment_fields() for why this can't just ride
+// along with the normal "Place order" submission).
+add_action( 'wp_enqueue_scripts', 'stanray_enqueue_qr_payment_proof_script', 20 );
+function stanray_enqueue_qr_payment_proof_script() {
+    if ( ! function_exists( 'is_checkout' ) || ! is_checkout() ) return;
+
+    wp_enqueue_script( 'jquery' );
+    wp_add_inline_script( 'jquery', stanray_qr_payment_proof_upload_js() );
+}
+
+function stanray_qr_payment_proof_upload_js() {
+    ob_start();
+    ?>
+    jQuery(function ($) {
+        $(document.body).on('change', '#qr_payment_proof', function () {
+            var input = this;
+            var $status = $('#qr_payment_proof_status');
+            var $hiddenId = $('#qr_payment_proof_id');
+            $hiddenId.val('');
+
+            if (!input.files || !input.files[0]) {
+                $status.text(<?php echo wp_json_encode( __( 'JPG, PNG, or PDF. Max 5MB.', 'stanray-custom' ) ); ?>);
+                return;
+            }
+
+            var file = input.files[0];
+            if (file.size > <?php echo (int) WC_Gateway_QR_Payment::PROOF_MAX_SIZE; ?>) {
+                $status.text(<?php echo wp_json_encode( __( 'File is too large. Maximum size is 5MB.', 'stanray-custom' ) ); ?>);
+                input.value = '';
+                return;
+            }
+
+            var formData = new FormData();
+            formData.append('action', 'stanray_qr_payment_proof_upload');
+            formData.append('nonce', $('#qr_payment_proof_nonce').val());
+            formData.append('file', file);
+
+            $status.text(<?php echo wp_json_encode( __( 'Uploading…', 'stanray-custom' ) ); ?>);
+
+            $.ajax({
+                url: <?php echo wp_json_encode( admin_url( 'admin-ajax.php' ) ); ?>,
+                type: 'POST',
+                data: formData,
+                processData: false,
+                contentType: false
+            }).done(function (response) {
+                if (response && response.success) {
+                    $hiddenId.val(response.data.attachment_id);
+                    $status.text(<?php echo wp_json_encode( __( 'Uploaded:', 'stanray-custom' ) ); ?> + ' ' + file.name);
+                } else {
+                    var msg = (response && response.data && response.data.message) ? response.data.message : <?php echo wp_json_encode( __( 'Upload failed. Please try again.', 'stanray-custom' ) ); ?>;
+                    $status.text(msg);
+                    input.value = '';
+                }
+            }).fail(function () {
+                $status.text(<?php echo wp_json_encode( __( 'Upload failed. Please try again.', 'stanray-custom' ) ); ?>);
+                input.value = '';
+            });
+        });
+    });
+    <?php
+    return ob_get_clean();
+}
+
+// Require + validate the proof upload before the order is allowed to place.
+// By this point the file itself is already uploaded (see
+// stanray_handle_qr_payment_proof_upload()); this just confirms checkout
+// received a valid, unclaimed attachment ID that belongs to this shopper.
+add_action( 'woocommerce_checkout_process', 'stanray_validate_qr_payment_proof' );
+function stanray_validate_qr_payment_proof() {
+    if ( empty( $_POST['payment_method'] ) || $_POST['payment_method'] !== 'qr_payment' ) {
+        return;
+    }
+
+    if ( ! stanray_get_verified_qr_proof_attachment() ) {
+        wc_add_notice( __( 'Please upload a screenshot or PDF of your payment confirmation.', 'stanray-custom' ), 'error' );
+    }
+}
+
+// Shows the uploaded proof on the admin order edit screen so staff can verify
+// it before moving the order from "on-hold" to "processing".
+add_action( 'woocommerce_admin_order_data_after_billing_address', 'stanray_display_qr_payment_proof' );
+function stanray_display_qr_payment_proof( $order ) {
+    if ( $order->get_payment_method() !== 'qr_payment' ) return;
+
+    $attachment_id = $order->get_meta( '_qr_payment_proof_id' );
+    if ( ! $attachment_id ) return;
+
+    $url = wp_get_attachment_url( $attachment_id );
+    if ( ! $url ) return;
+
+    $mime = get_post_mime_type( $attachment_id );
+
+    echo '<p class="form-field"><strong>' . esc_html__( 'Payment Proof:', 'stanray-custom' ) . '</strong><br>';
+    if ( strpos( (string) $mime, 'image/' ) === 0 ) {
+        $thumb_url = wp_get_attachment_image_url( $attachment_id, 'medium' );
+        echo '<a href="' . esc_url( $url ) . '" target="_blank" rel="noopener noreferrer"><img src="' . esc_url( $thumb_url ) . '" style="max-width:200px;display:block;margin-top:6px;border:1px solid #ddd;" /></a>';
+    } else {
+        echo '<a href="' . esc_url( $url ) . '" target="_blank" rel="noopener noreferrer">' . esc_html__( 'View PDF', 'stanray-custom' ) . '</a>';
+    }
+    echo '</p>';
 }
 
 // Media uploader JS for the QR image field on the gateway settings page
