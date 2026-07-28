@@ -85,7 +85,7 @@ $dt_popular_label   = get_option( 'stanray_sys_popular_label', 'Most Popular' );
             $price_html  = $product->get_price_html();
             $short_desc  = $product->get_short_description();
             if ( ! $short_desc ) {
-                $short_desc = wp_trim_words( wp_strip_all_tags( $product->get_description() ), 30, '...' );
+                $short_desc = wp_strip_all_tags( $product->get_description() );
             }
             $permalink   = $product->get_permalink();
             $attrs       = $product->get_attributes();

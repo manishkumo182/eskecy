@@ -3685,7 +3685,7 @@ justify-content: space-between;
     font-size: var(--font-size-sm);
     color: var(--color-gray-600);
     line-height: 1.75;
-    max-width: 46ch;
+    max-width: 50ch;
     border-left: 3px solid var(--color-gray-200);
     padding-left: var(--space-md);
 }
@@ -3926,14 +3926,14 @@ justify-content: space-between;
     object-fit: contain;
     display: block;
     mix-blend-mode: multiply;
-    opacity: 0.75;
+    opacity: 1;
     filter: drop-shadow(0 8px 8px rgba(0, 0, 0, 0.08));
     transition: transform 600ms ease, opacity 400ms ease;
 }
 
 .hb__product-link:hover .hb__product-img {
     transform: translateY(-10px);
-    opacity: 1;
+    opacity: 0.75;
 }
 
 
