@@ -48,7 +48,13 @@ $sections    = $show_shipping
                             <?php if ( $is_default ) : ?><span class="stanray-status stanray-status--completed"><?php esc_html_e( 'Default', 'stanray-custom' ); ?></span><?php endif; ?>
                         </h3>
                     </header>
-                    <address><?php echo wp_kses_post( stanray_format_address_html( $post->ID ) ); ?></address>
+                    <address><?php
+                        $stanray_lines = [];
+                        foreach ( stanray_saved_address_lines( $post->ID ) as $stanray_label => $stanray_value ) {
+                            $stanray_lines[] = '<strong>' . esc_html( $stanray_label ) . ':</strong> ' . esc_html( $stanray_value );
+                        }
+                        echo wp_kses_post( implode( '<br>', $stanray_lines ) );
+                    ?></address>
                     <div class="stanray-form-actions">
                         <a href="<?php echo esc_url( $edit_url ); ?>" class="stanray-btn stanray-btn--ghost stanray-btn--xs"><?php esc_html_e( 'Edit', 'stanray-custom' ); ?></a>
                         <?php if ( ! $is_default ) : ?>

@@ -172,13 +172,30 @@
     border-color: #c9d1d93d;
     color: #fff;
 }
+.woocommerce-password-strength,
+div#password_strength {
+    color: var(--color-error) !important;
+    margin-top: -0.2rem;
+}
+/* Weak/bad password state — flag the input itself, not just the message
+   below it. The strength meter is inserted as the next sibling of
+   .password-input (see WC's password-strength-meter.js), so :has() on the
+   following sibling is the only way to reach back and style the input. */
+.password-input:has(+ .woocommerce-password-strength.short) .stanray-input,
+.password-input:has(+ .woocommerce-password-strength.bad) .stanray-input {
+    border-color: var(--color-error);
+}
+h2.stanray-auth__title {
+    margin-top: 0px!important;
+}
+    /* margin-top: 0px !important; */
 /* page.php's inline `.page-body a { color: var(--color-black); }` (specificity
    0,0,1,1) wraps the My Account page and outranks .stanray-btn alone
    (0,0,1,0) — every .stanray-btn under .page-body needs this reasserted per
    variant, or it renders black-on-black (this affects any pre-existing
    .stanray-btn in My Account, not just the address book). */
 .page-body a.stanray-btn { color: var(--color-white); }
-.page-body a.stanray-btn:hover { color: #000; }
+.page-body a.stanray-btn:hover { color: white; }
 .page-body a.stanray-btn--outline { color: var(--color-black); }
 .page-body a.stanray-btn--outline:hover { color: var(--color-white); }
 .page-body a.stanray-btn--ghost { color: var(--color-gray-600); }
@@ -257,7 +274,7 @@
 
 .stanray-field label {
     font-family: var(--font-body);
-    font-size: 10px;
+    font-size: 12px;
     font-weight: 500;
     letter-spacing: 0.14em;
     text-transform: uppercase;
@@ -416,7 +433,7 @@
 
 .stanray-auth__sub {
     font-family: var(--font-body);
-    font-size: var(--font-size-sm);
+    font-size: var(--font-size-base);
     color: var(--color-gray-400);
     letter-spacing: 0.04em;
     margin-bottom: var(--space-lg);
@@ -449,7 +466,8 @@
 .stanray-auth--single {
     display: block;
     max-width: 480px;
-    padding: var(--space-48) var(--space-lg);
+    margin-top: 0;
+    padding: var(--space-lg) var(--space-lg) var(--space-48);
 }
 
 .stanray-auth__back {
@@ -753,7 +771,7 @@ h2.stanray-dashboard__greeting {
     padding: var(--space-12) var(--space-20);
     margin-bottom: -1px;
     font-family: var(--font-body);
-    font-size: 10px;
+    font-size: 12px;
     letter-spacing: 0.14em;
     text-transform: uppercase;
     color: var(--color-gray-600);
@@ -784,7 +802,7 @@ h2.stanray-dashboard__greeting {
     padding: var(--space-sm) var(--space-20);
     background: var(--color-gray-100);
     font-family: var(--font-body);
-    font-size: 9px;
+    font-size: 12px;
     letter-spacing: 0.16em;
     text-transform: uppercase;
     color: var(--color-gray-400);
@@ -953,7 +971,7 @@ h2.stanray-dashboard__greeting {
 .woocommerce-address-fields label,
 .woocommerce-address-fields__field-wrapper label {
     font-family: var(--font-body);
-    font-size: 10px;
+    font-size: 12px;
     font-weight: 500;
     letter-spacing: 0.12em;
     text-transform: uppercase;

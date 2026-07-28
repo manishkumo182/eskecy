@@ -7,6 +7,35 @@
 
 if ( ! defined( 'ABSPATH' ) ) exit;
 
+// ─── ORDER DETAILS: labeled billing/shipping address lines ────────────────────
+// Used by woocommerce/order/order-details-customer.php (theme override).
+// Builds a [ label => value ] list for the given address type ('billing' or
+// 'shipping'), skipping empty fields. Country/state codes are resolved to
+// their full names the same way WC's own get_formatted_address() does.
+function stanray_order_address_lines( $order, $type ) {
+    $get = function( $key ) use ( $order, $type ) {
+        $method = "get_{$type}_{$key}";
+        return method_exists( $order, $method ) ? $order->$method() : '';
+    };
+    $country_code = $get( 'country' );
+    $state_code   = $get( 'state' );
+
+    $lines = [
+        __( 'Name', 'stanray-custom' )     => trim( $get( 'first_name' ) . ' ' . $get( 'last_name' ) ),
+        __( 'Address', 'stanray-custom' )  => trim( $get( 'address_1' ) . ' ' . $get( 'address_2' ) ),
+        __( 'City', 'stanray-custom' )     => $get( 'city' ),
+        __( 'Postcode', 'stanray-custom' ) => $get( 'postcode' ),
+        __( 'Province', 'stanray-custom' ) => $state_code ? ( WC()->countries->get_states( $country_code )[ $state_code ] ?? $state_code ) : '',
+        __( 'Country', 'stanray-custom' )  => $country_code ? ( WC()->countries->countries[ $country_code ] ?? $country_code ) : '',
+        __( 'Phone', 'stanray-custom' )    => $get( 'phone' ),
+    ];
+    if ( 'billing' === $type ) {
+        $lines[ __( 'Email', 'stanray-custom' ) ] = $get( 'email' );
+    }
+
+    return array_filter( $lines, function( $value ) { return '' !== trim( $value ); } );
+}
+
 // ─── CURRENCY SYMBOL: use literal "Rs" text instead of the ₨ glyph ────────────
 // WooCommerce's default NPR symbol is the single Unicode character ₨ (U+20A8).
 // In this theme's fonts it renders as a fused R+s shape with no letter-gap of
@@ -58,11 +87,17 @@ add_filter( 'woocommerce_billing_fields', function( $fields ) {
     if ( isset( $fields['billing_phone'] ) ) {
         $fields['billing_phone']['required'] = true;
     }
+    if ( isset( $fields['billing_postcode'] ) ) {
+        $fields['billing_postcode']['required'] = true;
+    }
     return $fields;
 } );
 add_filter( 'woocommerce_shipping_fields', function( $fields ) {
     if ( isset( $fields['shipping_phone'] ) ) {
         $fields['shipping_phone']['required'] = true;
+    }
+    if ( isset( $fields['shipping_postcode'] ) ) {
+        $fields['shipping_postcode']['required'] = true;
     }
     return $fields;
 } );
@@ -197,28 +232,6 @@ add_action( 'woocommerce_single_product_summary', function() {
     }
 }, 26 );
 
-// ─── SINGLE PRODUCT: 3. WISHLIST BUTTON (priority 31 — below Add to Cart) ────
-add_action( 'woocommerce_single_product_summary', function() {
-    global $product;
-    if ( ! $product ) return;
-    $product_id = $product->get_id();
-
-    // Check if already in wishlist
-    $wishlist   = eskecy_get_wishlist();
-    $in_wish    = in_array( $product_id, $wishlist );
-    $icon       = eskecy_wishlist_heart_svg( $in_wish );
-    $label      = $in_wish ? 'Remove from Wishlist' : 'Save to Wishlist';
-    $state_cls  = $in_wish ? ' is-wished' : '';
-
-    echo '<button
-        class="wishlist-btn' . $state_cls . '"
-        data-product-id="' . esc_attr( $product_id ) . '"
-        aria-label="' . esc_attr( $label ) . '"
-        data-nonce="' . esc_attr( wp_create_nonce( 'eskecy_wishlist' ) ) . '"
-    ><span class="wishlist-btn__icon">' . $icon . '</span>
-    <span class="wishlist-btn__label">' . esc_html( $label ) . '</span></button>';
-}, 31 );
-
 // ─── SINGLE PRODUCT: Divider before add to cart ───────────────────────────────
 add_action( 'woocommerce_single_product_summary', function() {
     echo '<div class="product-summary__divider"></div>';
@@ -233,7 +246,22 @@ add_shortcode( 'eskecy_wishlist', function() {
     }
 
     ob_start();
-    echo '<div class="wishlist-grid">';
+    echo '<div class="wishlist-toolbar">';
+    echo '<button type="button" class="btn btn--outline wishlist-clear-all" data-nonce="' . esc_attr( wp_create_nonce( 'eskecy_wishlist' ) ) . '">Remove All</button>';
+    echo '</div>';
+
+    echo '<div class="confirm-modal" id="wishlist-clear-confirm" role="dialog" aria-modal="true" aria-label="Remove all wishlist items">
+        <div class="confirm-modal__overlay"></div>
+        <div class="confirm-modal__box">
+            <p class="confirm-modal__message">Remove all items from your wishlist?</p>
+            <div class="confirm-modal__actions">
+                <button type="button" class="btn btn--outline confirm-modal__cancel">Cancel</button>
+                <button type="button" class="btn btn--primary confirm-modal__confirm">Remove All</button>
+            </div>
+        </div>
+    </div>';
+
+    echo '<div class="wishlist-grid" id="wishlist-grid">';
     foreach ( $wishlist as $pid ) {
         $product = wc_get_product( $pid );
         if ( ! $product || ! $product->is_visible() ) continue;
@@ -261,6 +289,25 @@ add_shortcode( 'eskecy_wishlist', function() {
 // ─── WISHLIST: AJAX toggle ────────────────────────────────────────────────────
 add_action( 'wp_ajax_eskecy_toggle_wishlist',        'eskecy_toggle_wishlist_handler' );
 add_action( 'wp_ajax_nopriv_eskecy_toggle_wishlist', 'eskecy_toggle_wishlist_handler' );
+
+// ─── WISHLIST: AJAX clear all ─────────────────────────────────────────────────
+add_action( 'wp_ajax_eskecy_clear_wishlist',        'eskecy_clear_wishlist_handler' );
+add_action( 'wp_ajax_nopriv_eskecy_clear_wishlist', 'eskecy_clear_wishlist_handler' );
+
+function eskecy_clear_wishlist_handler() {
+    check_ajax_referer( 'eskecy_wishlist', 'nonce' );
+
+    if ( ! is_user_logged_in() ) {
+        wp_send_json_error( [
+            'code'    => 'login_required',
+            'message' => 'Please log in to manage your wishlist.',
+        ] );
+    }
+
+    update_user_meta( get_current_user_id(), '_eskecy_wishlist', [] );
+
+    wp_send_json_success( [ 'count' => 0 ] );
+}
 
 function eskecy_toggle_wishlist_handler() {
     check_ajax_referer( 'eskecy_wishlist', 'nonce' );

@@ -86,6 +86,36 @@ function stanray_format_address_html( $post_id ) {
 }
 
 /**
+ * Build a [ label => value ] list for a saved address-book entry — same
+ * shape/labels as stanray_order_address_lines() in inc/woocommerce.php
+ * (used for order Billing/Shipping details), just reading from the
+ * stanray_address CPT instead of an order. Skips empty fields, e.g.
+ * Address/Postcode/Province on entries created after checkout stopped
+ * collecting them.
+ */
+function stanray_saved_address_lines( $post_id ) {
+    $fields       = stanray_get_address_fields_array( $post_id );
+    $country_code = $fields['country'] ?? '';
+    $state_code   = $fields['state'] ?? '';
+
+    $lines = [
+        __( 'Name', 'stanray-custom' )     => trim( ( $fields['first_name'] ?? '' ) . ' ' . ( $fields['last_name'] ?? '' ) ),
+        __( 'Company', 'stanray-custom' )  => $fields['company'] ?? '',
+        __( 'Address', 'stanray-custom' )  => trim( ( $fields['address_1'] ?? '' ) . ' ' . ( $fields['address_2'] ?? '' ) ),
+        __( 'City', 'stanray-custom' )     => $fields['city'] ?? '',
+        __( 'Postcode', 'stanray-custom' ) => $fields['postcode'] ?? '',
+        __( 'Province', 'stanray-custom' ) => $state_code ? ( WC()->countries->get_states( $country_code )[ $state_code ] ?? $state_code ) : '',
+        __( 'Country', 'stanray-custom' )  => $country_code ? ( WC()->countries->countries[ $country_code ] ?? $country_code ) : '',
+        __( 'Phone', 'stanray-custom' )    => $fields['phone'] ?? '',
+    ];
+    if ( 'billing' === get_post_meta( $post_id, '_address_type', true ) ) {
+        $lines[ __( 'Email', 'stanray-custom' ) ] = $fields['email'] ?? '';
+    }
+
+    return array_filter( $lines, function( $value ) { return '' !== trim( $value ); } );
+}
+
+/**
  * Create or update a saved address from sanitized $fields (unprefixed keys,
  * e.g. 'address_1' not 'billing_address_1'). Returns the post ID.
  */
@@ -205,6 +235,30 @@ function stanray_handle_address_endpoints() {
     stanray_maybe_migrate_legacy_addresses();
 }
 add_action( 'template_redirect', 'stanray_handle_address_endpoints' );
+
+/**
+ * Drop "Province" (state), "Street address" (address_1), and "Apartment,
+ * suite, unit, etc." (address_2) from the address-book add/edit form AND
+ * the checkout form — both read from this same
+ * WC()->countries->get_address_fields() source, so unsetting the keys here
+ * removes them from rendering, from required-field validation (both this
+ * theme's own check in stanray_handle_save_address_form() and WooCommerce
+ * core's own checkout validation), and from what actually gets stored,
+ * everywhere consistently. Scoped to just these two contexts so other
+ * consumers of get_address_fields() (admin order screens, REST API, order
+ * emails rendering an already-placed order's stored address) are untouched.
+ */
+function stanray_trim_saved_address_fields( $fields ) {
+    if ( ! is_wc_endpoint_url( 'saved-address' ) && ! is_checkout() ) return $fields;
+    unset(
+        $fields['billing_state'], $fields['shipping_state'],
+        $fields['billing_address_1'], $fields['shipping_address_1'],
+        $fields['billing_address_2'], $fields['shipping_address_2']
+    );
+    return $fields;
+}
+add_filter( 'woocommerce_billing_fields', 'stanray_trim_saved_address_fields' );
+add_filter( 'woocommerce_shipping_fields', 'stanray_trim_saved_address_fields' );
 
 /* ─── SAVED-ADDRESS ENDPOINT (add/edit one entry) ──────────────────────── */
 

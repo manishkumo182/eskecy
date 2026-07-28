@@ -91,8 +91,10 @@ function stanray_enqueue_assets() {
     // Top Marquee Bar CSS
     wp_enqueue_style( 'stanray-marquee-bar', STANRAY_URI . '/assets/css/marquee-bar.css', [ 'stanray-main' ], $asset_ver( '/assets/css/marquee-bar.css' ) );
 
-    // WooCommerce CSS — only on WC pages
-    if ( function_exists( 'is_woocommerce' ) && ( is_woocommerce() || is_cart() || is_checkout() || is_account_page() ) ) {
+    // WooCommerce CSS — only on WC pages (the wishlist page template isn't a
+    // WooCommerce page by WP's definition, but it reuses product-card/wishlist
+    // styles from this file, so it needs to be included explicitly)
+    if ( function_exists( 'is_woocommerce' ) && ( is_woocommerce() || is_cart() || is_checkout() || is_account_page() || is_page_template( 'page-wishlist.php' ) ) ) {
         wp_enqueue_style( 'stanray-woo', STANRAY_URI . '/assets/css/woocommerce.css', [ 'stanray-main' ], $asset_ver( '/assets/css/woocommerce.css' ) );
     }
 

@@ -244,6 +244,8 @@ button[name="add-to-cart"] {
     background: var(--color-white);
     transition: border-color var(--transition-fast);
     border-radius: 0;
+    -webkit-appearance: none;
+    appearance: none;
 }
 .woocommerce-checkout input:focus,
 .woocommerce-checkout select:focus,
@@ -522,6 +524,7 @@ button[name="add-to-cart"] {
     transition: transform var(--transition-fast);
 }
 .wishlist-btn:hover .wishlist-btn__icon { transform: scale(1.2); }
+.wishlist-btn.is-wished .wishlist-btn__icon svg { fill: currentColor; }
 
 /* ── WISHLIST ICON IN HEADER ─────────────────────────────────── */
 .header-wishlist {
@@ -531,10 +534,12 @@ button[name="add-to-cart"] {
     color: var(--color-white);
     line-height: 0;
     font-size: 0;
-    transition: opacity var(--transition-fast);
+    transition: opacity var(--transition-fast), color var(--transition-fast);
 }
 .header-wishlist:hover { opacity: 0.6; }
 .header-wishlist svg { stroke: currentColor; display: block; }
+.header-wishlist.has-items { color: var(--color-error); }
+.header-wishlist.has-items svg { fill: currentColor; }
 .header-wishlist__count {
     position: absolute;
     top: -8px;
@@ -558,6 +563,53 @@ button[name="add-to-cart"] {
 .home .site-header:not(.scrolled) .header-wishlist { vertical-align: middle; }
 
 /* ── WISHLIST PAGE ───────────────────────────────────────────── */
+.wishlist-toolbar {
+    display: flex;
+    justify-content: flex-end;
+    width: 100%;
+    margin-top: var(--space-lg);
+}
+
+/* ── CONFIRM MODAL (generic small dialog, e.g. Remove All) ─────── */
+.confirm-modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: var(--z-modal);
+    align-items: center;
+    justify-content: center;
+    padding: var(--space-md);
+}
+.confirm-modal.is-open { display: flex; }
+.confirm-modal__overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    backdrop-filter: blur(4px);
+}
+.confirm-modal__box {
+    position: relative;
+    z-index: 1;
+    background: var(--color-white);
+    max-width: 380px;
+    width: 100%;
+    padding: var(--space-24);
+    text-align: center;
+    border-radius: 4px;
+}
+.confirm-modal__message {
+    font-size: var(--font-size-sm);
+    color: var(--color-black);
+    margin-bottom: var(--space-lg);
+}
+.confirm-modal__actions {
+    display: flex;
+    gap: var(--space-md);
+}
+.confirm-modal__actions .btn {
+    flex: 1;
+    justify-content: center;
+}
 .wishlist-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
@@ -1123,7 +1175,7 @@ body.is-order-received .page-content { padding-block: var(--space-lg) var(--spac
     background: none;
     border: none;
     padding: 0;
-    margin: 0 0 var(--space-xl);
+    margin: 0 0 var(--space-lg);
     text-align: center;
     font-family: var(--font-display);
     font-size: clamp(1.5rem, 3vw, 2.25rem);
@@ -1133,17 +1185,48 @@ body.is-order-received .page-content { padding-block: var(--space-lg) var(--spac
 }
 .woocommerce-order .woocommerce-thankyou-order-failed,
 .woocommerce-order .woocommerce-thankyou-order-failed-actions { text-align: center; }
-
+h3.woocommerce-column__title {
+    margin-top: 0px!important;
+}
+.woocommerce-customer-details{
+    margin-top: 0px!important;
+}
+section.woocommerce-order-details {
+    background-color: #ffffff94;
+    padding: 20px;
+    margin-bottom: 20px;
+}
+th.woocommerce-table__product-table.product-total {
+    text-align-last: right;
+}
+td.woocommerce-table__product-total.product-total {
+    text-align-last: right;
+}
+/* Subtotal / Shipping / Total / Payment method rows — match the product
+   price column's right alignment above (order-details.php's tfoot rows
+   don't carry a .product-total class the way the tbody price cell does).
+   text-align-last, not text-align: main.css sets text-align-last: left on
+   the table itself, which wins over plain text-align on a single-line cell. */
+table.order_details tfoot td {
+    text-align-last: right;
+}
+span.woocommerce-Price-amount.amount {
+    font-size: 1rem !important;
+    text-align-last: right!important;
+}
 /* ── Order overview strip ────────────────────────────────────── */
 .woocommerce-order-overview {
     display: flex;
     flex-wrap: wrap;
     justify-content: center;
     list-style: none;
-    margin: 0 0 var(--space-2xl);
+    margin: 0 0 var(--space-40);
     padding: var(--space-lg) 0;
     border-top: 1px solid var(--color-gray-200);
     border-bottom: 1px solid var(--color-gray-200);
+}
+h2.stanray-page-title {
+    margin-top: 0px!important;
 }
 .woocommerce-order-overview li {
     flex: 1 1 160px;
@@ -1151,8 +1234,7 @@ body.is-order-received .page-content { padding-block: var(--space-lg) var(--spac
     flex-direction: column;
     gap: 0.4rem;
     text-align: center;
-    padding: var(--space-sm) var(--space-lg);
-    border-left: 1px solid var(--color-gray-200);
+    padding: var(--space-lg) var(--space-lg);
     font-size: var(--font-size-xs);
     text-transform: uppercase;
     letter-spacing: var(--letter-spacing);
@@ -1476,8 +1558,7 @@ section.related.products {
 .pdp-btn--buy { background: var(--color-error); color: var(--color-white); border-color: var(--color-accent); }
 .pdp-btn--buy:hover { filter: brightness(0.92); }
 
-.pdp-atc-row .wishlist-btn { width: 48px; height: 48px; flex: 0 0 auto; padding: 0; margin-top: 0; border-radius: 50%; justify-content: center; }
-.pdp-atc-row .wishlist-btn__label { display: none; }
+.pdp-gallery__wish { opacity: 1; transform: none; }
 
 /* ── META: SKU / Tags / Share ─────────────────────────────────── */
 .pdp-meta { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-md) var(--space-lg); font-size: var(--font-size-xs); color: var(--color-gray-600); margin-top: var(--space-lg); }

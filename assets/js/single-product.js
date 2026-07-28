@@ -70,13 +70,6 @@
            (enhanceQuantity()), which decorates every .quantity div — no
            need to duplicate that here. */
 
-        /* ── Move the wishlist button onto the Add to Cart row ─────────── */
-        var $wishBtn = $('.entry-summary .wishlist-btn');
-        var $atcRow  = $('.pdp-atc-row');
-        if ($wishBtn.length && $atcRow.length) {
-            $atcRow.append($wishBtn);
-        }
-
         /* Review-form star rating: WooCommerce's own single-product.js already
            progressively-enhances #rating into a <p class="stars"> widget with
            star-1..star-5 links (marking the picked one .active) — it just had

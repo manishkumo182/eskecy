@@ -23,7 +23,6 @@
 /* ── LEFT: media panel ──────────────────────────────────────── */
 .sb__media {
     position: relative;
-    background: #e2dfd9;
     line-height: 0;
     /* No overflow:hidden — lets pin labels + pulse rings show outside image bounds */
 }

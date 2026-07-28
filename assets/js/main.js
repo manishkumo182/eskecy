@@ -267,10 +267,16 @@ document.addEventListener('DOMContentLoaded', function () {
                 if (notice) notice.scrollIntoView({ behavior: 'smooth', block: 'start' });
             }
 
-            // preventScroll: focusing the field would otherwise silently
-            // re-scroll the page right back down to it, undoing the scroll
-            // to the notice above.
-            invalidFields[0].focus({ preventScroll: true });
+            // preventScroll stops the browser from scrolling *because of*
+            // this focus call, but focusing an element while the smooth
+            // scroll above is still animating can still interrupt that
+            // animation mid-flight (a scroll-anchoring side effect in
+            // Chrome/Safari) — visible as the page jumping partway toward
+            // the notice, then snapping back. Deferring focus until the
+            // smooth scroll has actually finished avoids the two competing.
+            setTimeout( function () {
+                invalidFields[0].focus({ preventScroll: true });
+            }, 400 );
         }, 0);
     }
 
@@ -1153,7 +1159,6 @@ document.addEventListener('click', function (e) {
         if (state.minPrice !== null) formData.append('min_price', state.minPrice);
         if (state.maxPrice !== null) formData.append('max_price', state.maxPrice);
 
-        if (window.StanrayLoader) window.StanrayLoader.show();
         fetch(ajaxUrl, { method: 'POST', body: formData })
             .then(function (r) { return r.json(); })
             .then(function (data) {
@@ -1181,7 +1186,6 @@ document.addEventListener('click', function (e) {
             .finally(function () {
                 isFetching = false;
                 setLoading(false);
-                if (window.StanrayLoader) window.StanrayLoader.hide();
             });
     }
 
@@ -1304,47 +1308,41 @@ document.addEventListener('click', function (e) {
         var allWishBtns = document.querySelectorAll('[data-product-id="' + productId + '"]');
         allWishBtns.forEach(function(wb) {
             if (wb.classList.contains('wishlist-btn')) {
-                var icon  = wb.querySelector('.wishlist-btn__icon');
                 var label = wb.querySelector('.wishlist-btn__label');
                 if (action === 'added') {
                     wb.classList.add('is-wished');
-                    if (icon)  icon.textContent  = '♥';
                     if (label) label.textContent = 'Remove from Wishlist';
                     wb.setAttribute('aria-label', 'Remove from Wishlist');
                 } else {
                     wb.classList.remove('is-wished');
-                    if (icon)  icon.textContent  = '♡';
                     if (label) label.textContent = 'Save to Wishlist';
                     wb.setAttribute('aria-label', 'Save to Wishlist');
                 }
             } else if (wb.classList.contains('product-card__wish')) {
                 if (action === 'added') {
                     wb.classList.add('is-wished');
-                    wb.textContent = '♥';
                     wb.setAttribute('aria-label', 'Remove from Wishlist');
                     wb.setAttribute('title', 'Remove from Wishlist');
                 } else {
                     wb.classList.remove('is-wished');
-                    wb.textContent = '♡';
                     wb.setAttribute('aria-label', 'Save to Wishlist');
                     wb.setAttribute('title', 'Save to Wishlist');
                 }
             }
         });
 
-        // Update header count badge
-        var countEl = document.querySelector('.header-wishlist__count');
+        // Update header count badge + filled/outline icon state
+        var countEl   = document.querySelector('.header-wishlist__count');
+        var heartLink = document.querySelector('.header-wishlist');
+        if (heartLink) heartLink.classList.toggle('has-items', count > 0);
         if (countEl) {
             countEl.textContent = count;
             countEl.style.display = count > 0 ? 'flex' : 'none';
-        } else if (count > 0) {
-            var heartLink = document.querySelector('.header-wishlist');
-            if (heartLink) {
-                var span = document.createElement('span');
-                span.className = 'header-wishlist__count';
-                span.textContent = count;
-                heartLink.appendChild(span);
-            }
+        } else if (count > 0 && heartLink) {
+            var span = document.createElement('span');
+            span.className = 'header-wishlist__count';
+            span.textContent = count;
+            heartLink.appendChild(span);
         }
 
         // If on wishlist page, remove the card
@@ -1458,6 +1456,91 @@ document.addEventListener('click', function (e) {
                     btn.disabled = false;
                 });
         });
+
+        var clearConfirmModal = document.getElementById('wishlist-clear-confirm');
+        var pendingClearBtn   = null;
+
+        function closeClearConfirm() {
+            if (clearConfirmModal) clearConfirmModal.classList.remove('is-open');
+            pendingClearBtn = null;
+        }
+
+        function runClearWishlist(clearBtn) {
+            var nonce   = clearBtn.dataset.nonce || (window.eskecyWishlist && window.eskecyWishlist.nonce);
+            var ajaxUrl = (window.eskecyWishlist && window.eskecyWishlist.ajaxUrl) || (window.stanrayData && window.stanrayData.ajaxUrl);
+            if (!ajaxUrl) return;
+
+            clearBtn.disabled = true;
+
+            var formData = new FormData();
+            formData.append('action', 'eskecy_clear_wishlist');
+            formData.append('nonce', nonce);
+            if (window.StanrayLoader) window.StanrayLoader.show();
+
+            fetch(ajaxUrl, { method: 'POST', body: formData })
+                .then(function(r) { return r.json(); })
+                .then(function(data) {
+                    if (!data.success) return;
+
+                    var grid = document.getElementById('wishlist-grid');
+                    if (grid) {
+                        grid.style.transition = 'opacity 0.3s ease';
+                        grid.style.opacity = '0';
+                        setTimeout(function() {
+                            var wrap        = grid.parentNode;
+                            var toolbar     = document.querySelector('.wishlist-toolbar');
+                            var shopLink    = document.querySelector('.section__link');
+                            var shopUrl     = shopLink ? shopLink.href : '/';
+                            grid.remove();
+                            if (toolbar) toolbar.remove();
+                            var empty = document.createElement('div');
+                            empty.className = 'wishlist-empty';
+                            empty.innerHTML = '<p>Your wishlist is empty.</p><a href="' + shopUrl + '" class="btn btn--primary">Shop Now</a>';
+                            wrap.appendChild(empty);
+                        }, 300);
+                    }
+
+                    // Reset every wishlist icon across the site (header, product cards, PDP)
+                    document.querySelectorAll('.wishlist-btn.is-wished, .product-card__wish.is-wished').forEach(function(wb) {
+                        wb.classList.remove('is-wished');
+                        wb.setAttribute('aria-label', 'Save to Wishlist');
+                        wb.setAttribute('title', 'Save to Wishlist');
+                        var label = wb.querySelector('.wishlist-btn__label');
+                        if (label) label.textContent = 'Save to Wishlist';
+                    });
+                    var countEl   = document.querySelector('.header-wishlist__count');
+                    var heartLink = document.querySelector('.header-wishlist');
+                    if (heartLink) heartLink.classList.remove('has-items');
+                    if (countEl) countEl.style.display = 'none';
+                })
+                .catch(function() {})
+                .finally(function() {
+                    clearBtn.disabled = false;
+                    if (window.StanrayLoader) window.StanrayLoader.hide();
+                });
+        }
+
+        document.addEventListener('click', function(e) {
+            var clearBtn = e.target.closest('.wishlist-clear-all');
+            if (!clearBtn) return;
+            if (!clearConfirmModal) return;
+
+            pendingClearBtn = clearBtn;
+            clearConfirmModal.classList.add('is-open');
+        });
+
+        if (clearConfirmModal) {
+            clearConfirmModal.querySelector('.confirm-modal__overlay').addEventListener('click', closeClearConfirm);
+            clearConfirmModal.querySelector('.confirm-modal__cancel').addEventListener('click', closeClearConfirm);
+            clearConfirmModal.querySelector('.confirm-modal__confirm').addEventListener('click', function() {
+                var btn = pendingClearBtn;
+                closeClearConfirm();
+                if (btn) runClearWishlist(btn);
+            });
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape' && clearConfirmModal.classList.contains('is-open')) closeClearConfirm();
+            });
+        }
     });
 })();
 

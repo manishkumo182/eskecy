@@ -17,10 +17,22 @@ $all_ids            = $post_thumbnail_id ? array_merge( [ $post_thumbnail_id ], 
 if ( empty( $all_ids ) ) {
     $all_ids = [ 0 ]; // placeholder
 }
+
+$product_id = $product->get_id();
+$in_wish    = in_array( $product_id, eskecy_get_wishlist() );
+$wish_label = $in_wish ? 'Remove from Wishlist' : 'Save to Wishlist';
 ?>
 <div class="pdp-gallery" data-count="<?php echo esc_attr( count( $all_ids ) ); ?>">
 
     <div class="pdp-gallery__main">
+        <button
+            class="product-card__wish pdp-gallery__wish<?php echo $in_wish ? ' is-wished' : ''; ?>"
+            data-product-id="<?php echo esc_attr( $product_id ); ?>"
+            data-nonce="<?php echo esc_attr( wp_create_nonce( 'eskecy_wishlist' ) ); ?>"
+            aria-label="<?php echo esc_attr( $wish_label ); ?>"
+            title="<?php echo esc_attr( $wish_label ); ?>"
+        ><?php echo eskecy_wishlist_heart_svg( $in_wish ); ?></button>
+
         <?php if ( count( $all_ids ) > 1 ) : ?>
         <button type="button" class="pdp-gallery__arrow pdp-gallery__arrow--prev" aria-label="<?php esc_attr_e( 'Previous image', 'stanray-custom' ); ?>">
             <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
