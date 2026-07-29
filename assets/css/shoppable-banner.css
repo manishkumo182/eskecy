@@ -13,11 +13,11 @@
 
 .sb__inner {
     display: grid;
-    grid-template-columns: 58fr 42fr;
+    grid-template-columns: 62fr 38fr;
     gap: 2.5rem;
     max-width: 1380px;
     margin: 0 auto;
-    align-items: start;
+    align-items: center;
 }
 
 /* ── LEFT: media panel ──────────────────────────────────────── */
@@ -47,8 +47,8 @@
 .sb__img {
     width: 100%;
     height: auto;
-    min-height: 500px;
-    max-height: 700px;
+    min-height: 540px;
+    max-height: 760px;
     object-fit: cover;
     display: block;
     border-radius: 20px; /* rounded corners directly on the image */
