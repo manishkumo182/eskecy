@@ -98,9 +98,11 @@ function stanray_enqueue_assets() {
         wp_enqueue_style( 'stanray-woo', STANRAY_URI . '/assets/css/woocommerce.css', [ 'stanray-main' ], $asset_ver( '/assets/css/woocommerce.css' ) );
     }
 
-    // Account CSS — on account pages, and everywhere for guests (powers the
-    // wishlist login modal, which reuses the same Login/Register markup).
-    if ( is_account_page() || ! is_user_logged_in() ) {
+    // Account CSS — on account pages, everywhere for guests (powers the
+    // wishlist login modal, which reuses the same Login/Register markup),
+    // and on the thank-you page (needed there for .stanray-status, which the
+    // invoice now shows regardless of whether the customer is logged in).
+    if ( is_account_page() || ! is_user_logged_in() || ( function_exists( 'is_order_received_page' ) && is_order_received_page() ) ) {
         wp_enqueue_style( 'stanray-account', STANRAY_URI . '/assets/css/account.css', [ 'stanray-main' ], $asset_ver( '/assets/css/account.css' ) );
     }
 

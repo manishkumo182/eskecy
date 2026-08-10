@@ -494,7 +494,7 @@ form.woocommerce-ordering {
     border-bottom: 1px solid var(--color-gray-200);
 }
 .mini-cart__title,
-.category-drawer__title { font-size: var(--font-size-md); font-family: var(--font-display); }
+.category-drawer__title { font-size: var(--font-size-md); font-family: var(--font-body); }
 .mini-cart__content,
 .category-drawer__content { flex: 1; overflow-y: auto; padding: var(--space-md) var(--space-lg); }
 
@@ -4659,6 +4659,11 @@ a.cr__card-label--link:focus {
 /* ── ORDER-RECEIVED / INVOICE PRINT ─────────────────────────────────────── */
 .invoice-letterhead { display: none; }
 
+/* Letter, 0.5in margins — gives the rules below a fixed, predictable page
+   to fit a typical 2–4 item order onto, instead of relying on whatever
+   default margins the browser's print dialog happens to use. */
+@page { size: letter; margin: 0.5in; }
+
 @media print {
     body.is-order-received #site-header,
     body.is-order-received #site-footer,
@@ -4676,15 +4681,19 @@ a.cr__card-label--link:focus {
     body.is-order-received {
         background: #fff;
         padding-top: 0 !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
     }
+
+    body.is-order-received .woocommerce-order { max-width: 100%; }
 
     body.is-order-received .invoice-letterhead {
         display: flex;
         align-items: center;
         justify-content: space-between;
         border-bottom: 2px solid #000;
-        padding-bottom: var(--space-md);
-        margin-bottom: var(--space-lg);
+        padding-bottom: 10px;
+        margin-bottom: 14px;
     }
     body.is-order-received .invoice-letterhead__brand {
         font-family: var(--font-display);
@@ -4708,6 +4717,81 @@ a.cr__card-label--link:focus {
     body.is-order-received .thankyou-hero__icon,
     body.is-order-received .thankyou-hero__eyebrow {
         display: none !important;
+    }
+
+    /* The screen version's generous whitespace (32px row padding, 112px
+       section gaps) is what pushes a 2–3 item order onto 2–3 printed pages.
+       Structure and classes stay the same — only the rhythm tightens. */
+    body.is-order-received .woocommerce-thankyou-order-received {
+        font-size: 1.3rem;
+        margin: 0 0 12px;
+    }
+
+    body.is-order-received .woocommerce-order-overview {
+        padding: 8px 0;
+        margin: 0 0 14px;
+    }
+    body.is-order-received .woocommerce-order-overview li {
+        padding: 4px 10px;
+    }
+
+    body.is-order-received section.woocommerce-order-details {
+        background: none;
+        padding: 0;
+        margin-bottom: 14px;
+    }
+    body.is-order-received .woocommerce-order-details__title {
+        font-size: 1.15rem;
+        margin-bottom: 10px;
+    }
+    body.is-order-received .woocommerce-table--order-details {
+        margin-bottom: 14px;
+    }
+    body.is-order-received .woocommerce-table--order-details thead th {
+        padding: 0 0 6px;
+    }
+    body.is-order-received .woocommerce-table--order-details td,
+    body.is-order-received .woocommerce-table--order-details tfoot th {
+        padding: 6px 0;
+    }
+    body.is-order-received .woocommerce-table--order-details tfoot tr:last-child th,
+    body.is-order-received .woocommerce-table--order-details tfoot tr:last-child td {
+        padding-top: 8px;
+    }
+
+    body.is-order-received .woocommerce-customer-details {
+        margin-top: 14px;
+        break-inside: avoid;
+        page-break-inside: avoid;
+    }
+    body.is-order-received .woocommerce-columns--addresses {
+        gap: 12px;
+    }
+    body.is-order-received .woocommerce-customer-details .woocommerce-column {
+        padding: 12px;
+        break-inside: avoid;
+        page-break-inside: avoid;
+    }
+
+    /* Rows within the items table shouldn't tear across a page break either. */
+    body.is-order-received .woocommerce-table--order-details tbody tr,
+    body.is-order-received .woocommerce-table--order-details tfoot tr {
+        break-inside: avoid;
+        page-break-inside: avoid;
+    }
+    body.is-order-received .woocommerce-column__title {
+        margin-bottom: 6px;
+    }
+    body.is-order-received .woocommerce-customer-details address {
+        line-height: 1.5;
+    }
+
+    /* Status badge (added to the order-overview row by the thankyou.php
+       override) — force it to keep its border/tint instead of printing
+       as plain text, which some browsers do to badges by default. */
+    body.is-order-received .stanray-status {
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
     }
 }
 
