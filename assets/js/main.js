@@ -1614,6 +1614,180 @@ document.addEventListener('click', function (e) {
     });
 })();
 
+// ── ESKECY POINTS: cart/checkout redeem widget ───────────────────────────────
+// Delegated on `document`, not bound to a captured element reference: on
+// Checkout, a successful Apply/Remove triggers WooCommerce's own
+// `update_checkout` event, which replaces the whole #order_review markup
+// (including this widget) with a freshly AJAX-rendered copy — a listener
+// bound directly to the old node would go dead after that swap.
+(function () {
+    function setMessage(widget, text, isError) {
+        var msg = widget.querySelector('.points-redeem-widget__message');
+        if (!msg) return;
+        msg.textContent = text || '';
+        msg.classList.toggle('is-error', !!isError);
+    }
+
+    function refreshOrderReview() {
+        // Checkout: ask WooCommerce's own checkout.js to recalculate and
+        // re-render just the order review area — the same "recalculating"
+        // indicator it already shows once on page load, not a full page
+        // reload/flash. Cart (Blocks/Store API) has no equivalent in-place
+        // refresh hook available here, so a reload keeps its totals in sync.
+        if (document.body.classList.contains('woocommerce-checkout') && window.jQuery) {
+            window.jQuery(document.body).trigger('update_checkout');
+        } else {
+            window.location.reload();
+        }
+    }
+
+    // Toggle bar — slides the panel open/closed with the same
+    // slideToggle(400) core's own checkout.js uses for the coupon form.
+    document.addEventListener('click', function (e) {
+        if (!e.target.closest('.points-redeem-widget__toggle')) return;
+        e.preventDefault();
+
+        var widget = e.target.closest('#points-redeem-widget');
+        var panel  = widget && widget.querySelector('.points-redeem-widget__panel');
+        var link   = widget && widget.querySelector('.points-redeem-widget__toggle-link');
+        if (!panel) return;
+
+        if (window.jQuery) {
+            window.jQuery(panel).slideToggle(400);
+        } else {
+            panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+        }
+        if (link) link.setAttribute('aria-expanded', panel.style.display !== 'none' ? 'true' : 'false');
+    });
+
+    // Apply / Remove
+    document.addEventListener('click', function (e) {
+        var applyBtn  = e.target.closest('.points-redeem-apply');
+        var removeBtn = e.target.closest('.points-redeem-remove');
+        if (!applyBtn && !removeBtn) return;
+        e.preventDefault();
+
+        var widget = e.target.closest('#points-redeem-widget');
+        if (!widget) return;
+
+        var ajaxUrl = (window.eskecyPoints && window.eskecyPoints.ajaxUrl) || (window.stanrayData && window.stanrayData.ajaxUrl);
+        var nonce   = widget.dataset.nonce || (window.eskecyPoints && window.eskecyPoints.nonce);
+        if (!ajaxUrl) return;
+
+        var btn = applyBtn || removeBtn;
+        var formData = new FormData();
+
+        if (applyBtn) {
+            var input  = widget.querySelector('.points-redeem-input');
+            var points = input ? parseInt(input.value, 10) : 0;
+            if (!points || points < 1) {
+                setMessage(widget, 'Enter how many points to redeem.', true);
+                return;
+            }
+            formData.append('action', 'eskecy_apply_points_redeem');
+            formData.append('points', points);
+        } else {
+            formData.append('action', 'eskecy_remove_points_redeem');
+        }
+        formData.append('nonce', nonce);
+
+        btn.disabled = true;
+        setMessage(widget, '');
+        if (window.StanrayLoader) window.StanrayLoader.show();
+
+        fetch(ajaxUrl, { method: 'POST', body: formData })
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                if (!data.success) {
+                    setMessage(widget, (data.data && data.data.message) || 'Something went wrong.', true);
+                    btn.disabled = false;
+                    if (window.StanrayLoader) window.StanrayLoader.hide();
+                    return;
+                }
+                if (window.StanrayLoader) window.StanrayLoader.hide();
+                refreshOrderReview();
+            })
+            .catch(function () {
+                setMessage(widget, 'Something went wrong.', true);
+                btn.disabled = false;
+                if (window.StanrayLoader) window.StanrayLoader.hide();
+            });
+    });
+})();
+
+// ── ORDER CANCELLATION: confirm modal (Orders list + single order page) ──────
+// Same #cancel-order-confirm markup on both pages (see
+// stanray_render_cancel_order_modal in inc/order-cancellation.php); a plain
+// reload on success is enough here (infrequent action, not a checkout flow)
+// to reflect the new status in the row badge / button.
+document.addEventListener('DOMContentLoaded', function () {
+    var cancelModal      = document.getElementById('cancel-order-confirm');
+    var pendingCancelBtn = null;
+    if (!cancelModal) return;
+
+    function closeCancelConfirm() {
+        cancelModal.classList.remove('is-open');
+        pendingCancelBtn = null;
+        var reasonField = cancelModal.querySelector('.confirm-modal__reason');
+        if (reasonField) reasonField.value = '';
+    }
+
+    function runCancelOrder(triggerBtn) {
+        var orderId = triggerBtn.dataset.orderId;
+        var nonce   = triggerBtn.dataset.nonce;
+        var ajaxUrl = (window.eskecyPoints && window.eskecyPoints.ajaxUrl) || (window.stanrayData && window.stanrayData.ajaxUrl);
+        if (!orderId || !ajaxUrl) return;
+
+        var reasonField = cancelModal.querySelector('.confirm-modal__reason');
+        var confirmBtn  = cancelModal.querySelector('.confirm-modal__confirm');
+
+        confirmBtn.disabled = true;
+
+        var formData = new FormData();
+        formData.append('action', 'eskecy_cancel_order');
+        formData.append('order_id', orderId);
+        formData.append('nonce', nonce);
+        formData.append('reason', reasonField ? reasonField.value : '');
+
+        if (window.StanrayLoader) window.StanrayLoader.show();
+
+        fetch(ajaxUrl, { method: 'POST', body: formData })
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                if (!data.success) {
+                    var msg = cancelModal.querySelector('.confirm-modal__message');
+                    if (msg) msg.textContent = (data.data && data.data.message) || 'Something went wrong.';
+                    confirmBtn.disabled = false;
+                    if (window.StanrayLoader) window.StanrayLoader.hide();
+                    return;
+                }
+                window.location.reload();
+            })
+            .catch(function () {
+                confirmBtn.disabled = false;
+                if (window.StanrayLoader) window.StanrayLoader.hide();
+            });
+    }
+
+    document.addEventListener('click', function (e) {
+        var triggerBtn = e.target.closest('.cancel-order-trigger');
+        if (!triggerBtn) return;
+
+        pendingCancelBtn = triggerBtn;
+        cancelModal.classList.add('is-open');
+    });
+
+    cancelModal.querySelector('.confirm-modal__overlay').addEventListener('click', closeCancelConfirm);
+    cancelModal.querySelector('.confirm-modal__cancel').addEventListener('click', closeCancelConfirm);
+    cancelModal.querySelector('.confirm-modal__confirm').addEventListener('click', function () {
+        var btn = pendingCancelBtn;
+        if (btn) runCancelOrder(btn);
+    });
+    document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape' && cancelModal.classList.contains('is-open')) closeCancelConfirm();
+    });
+});
+
 // ── CUSTOMER REVIEWS SLIDER ──────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', function () {
     if (!document.querySelector('.js-cr-slider')) return;

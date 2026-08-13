@@ -224,6 +224,9 @@ require_once STANRAY_DIR . '/inc/post-purchase-review.php';
 require_once STANRAY_DIR . '/inc/wishlist-login-modal.php';
 require_once STANRAY_DIR . '/inc/address-book.php';
 require_once STANRAY_DIR . '/inc/account-reset-link-expiration.php';
+require_once STANRAY_DIR . '/inc/points.php';
+require_once STANRAY_DIR . '/inc/admin-points-settings.php';
+require_once STANRAY_DIR . '/inc/order-cancellation.php';
 
 
 // ─── BODY CLASSES ─────────────────────────────────────────────────────────────

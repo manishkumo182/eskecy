@@ -415,10 +415,18 @@ add_filter( 'woocommerce_add_to_cart_fragments', function( $fragments ) {
     return $fragments;
 } );
 
-// ─── MY ACCOUNT: Remove Downloads tab ──────────────────────────────────────────
+// ─── MY ACCOUNT: Remove Downloads tab, insert My Points after Orders ──────────
 add_filter( 'woocommerce_account_menu_items', function( $items ) {
     unset( $items['downloads'] );
-    return $items;
+
+    $with_points = [];
+    foreach ( $items as $key => $label ) {
+        $with_points[ $key ] = $label;
+        if ( 'orders' === $key ) {
+            $with_points['eskecy-points'] = __( 'My Points', 'stanray-custom' );
+        }
+    }
+    return $with_points;
 } );
 
 // ─── CHECKOUT: Remove company field ───────────────────────────────────────────

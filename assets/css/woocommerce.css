@@ -602,6 +602,22 @@ button[name="add-to-cart"] {
     color: var(--color-black);
     margin-bottom: var(--space-lg);
 }
+/* Optional reason field (e.g. order cancellation) — plain textarea matching
+   the .points-redeem-input field styling used elsewhere on account pages. */
+.confirm-modal__reason {
+    width: 100%;
+    min-height: 70px;
+    padding: var(--space-12) var(--space-md);
+    margin-bottom: var(--space-lg);
+    border: 1px solid var(--color-gray-200);
+    background: var(--color-white);
+    font-family: var(--font-body);
+    font-size: var(--font-size-sm);
+    color: var(--color-black);
+    text-align: left;
+    resize: vertical;
+}
+.confirm-modal__reason:focus { outline: none; border-color: var(--color-black); }
 .confirm-modal__actions {
     display: flex;
     gap: var(--space-md);
@@ -1731,4 +1747,74 @@ section.related.products {
     .pdp-gallery { position: static; }
     .pdp-reviews__summary { grid-template-columns: 1fr; }
 }
+
+/* ── CART: Eskecy Points redeem widget ──────────────────────────
+   Uses .btn / .btn--primary / .btn--outline from main.css (always loaded)
+   rather than account.css's .stanray-btn, since account.css only loads on
+   account pages / for logged-out visitors — not on the Cart page for a
+   logged-in customer, which is exactly who this widget is shown to. */
+.points-redeem-widget { margin: var(--space-lg) 0; }
+
+/* Toggle bar — collapsed state, styled to match the "Have a coupon?" bar
+   directly above it (.woocommerce-info, see WC NOTICES above) so the two
+   read as a matching pair rather than one static box next to a collapsed one. */
+.points-redeem-widget__toggle {
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-md);
+    padding: var(--space-md) var(--space-lg);
+    font-size: var(--font-size-sm);
+    color: var(--color-black);
+    background: var(--color-gray-100);
+    border-left: 3px solid var(--color-accent);
+    border-radius: 6px;
+}
+.points-redeem-widget__toggle-link {
+    flex-shrink: 0;
+    font-family: var(--font-body);
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: inherit;
+    text-decoration: underline;
+}
+
+/* Panel — hidden by default via inline style (server-rendered), then
+   jQuery .slideToggle() in main.js, same mechanism WooCommerce's own
+   checkout.js already uses for the coupon form. Reset default UA <p>
+   margins explicitly since the classic Checkout page (unlike the account
+   dashboard) has no global margin reset. */
+.points-redeem-widget__panel {
+    margin-top: var(--space-sm);
+    padding: var(--space-md) var(--space-lg);
+    background: var(--color-gray-100);
+    border: 1px solid var(--color-gray-200);
+}
+.points-redeem-widget__balance,
+.points-redeem-widget__applied {
+    margin: 0 0 var(--space-sm);
+    font-size: var(--font-size-sm);
+    color: var(--color-gray-600);
+}
+.points-redeem-widget__form {
+    display: flex;
+    gap: var(--space-sm);
+}
+.points-redeem-input {
+    flex: 1;
+    min-width: 0;
+    padding: var(--space-12) var(--space-md);
+    border: 1px solid var(--color-gray-200);
+    background: var(--color-white);
+    font-size: var(--font-size-sm);
+}
+.points-redeem-input:focus { outline: none; border-color: var(--color-black); }
+.points-redeem-widget__message {
+    margin: var(--space-sm) 0 0;
+    font-size: var(--font-size-xs);
+    color: var(--color-gray-600);
+}
+.points-redeem-widget__message.is-error { color: var(--color-error); }
 

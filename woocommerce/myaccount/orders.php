@@ -89,9 +89,21 @@ $customer_orders = wc_get_orders( apply_filters( 'woocommerce_my_account_my_orde
                 </div>
 
                 <div class="stanray-orders-table__cell stanray-orders-table__cell--actions">
-                    <a href="<?php echo esc_url( $order->get_view_order_url() ); ?>" class="stanray-btnn stanray-btn--xs">View</a>
+                    <a href="<?php echo esc_url( $order->get_view_order_url() ); ?>" class="stanray-icon-btn" title="<?php esc_attr_e( 'View order', 'stanray-custom' ); ?>" aria-label="<?php esc_attr_e( 'View order', 'stanray-custom' ); ?>">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg>
+                    </a>
                     <?php if ( $order->needs_payment() ) : ?>
-                    <a href="<?php echo esc_url( $order->get_checkout_payment_url() ); ?>" class="stanray-btn stanray-btn--xs stanray-btn--primary">Pay</a>
+                    <a href="<?php echo esc_url( $order->get_checkout_payment_url() ); ?>" class="stanray-icon-btn stanray-icon-btn--primary" title="<?php esc_attr_e( 'Pay now', 'stanray-custom' ); ?>" aria-label="<?php esc_attr_e( 'Pay now', 'stanray-custom' ); ?>">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+                    </a>
+                    <?php endif; ?>
+                    <?php if ( stanray_order_can_be_cancelled_by_customer( $order ) ) : ?>
+                    <button type="button" class="stanray-icon-btn stanray-icon-btn--danger cancel-order-trigger"
+                        data-order-id="<?php echo esc_attr( $order->get_id() ); ?>"
+                        data-nonce="<?php echo esc_attr( wp_create_nonce( 'eskecy_cancel_order' ) ); ?>"
+                        title="<?php esc_attr_e( 'Cancel order', 'stanray-custom' ); ?>" aria-label="<?php esc_attr_e( 'Cancel order', 'stanray-custom' ); ?>">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+                    </button>
                     <?php endif; ?>
                 </div>
 
@@ -113,6 +125,8 @@ $customer_orders = wc_get_orders( apply_filters( 'woocommerce_my_account_my_orde
             <?php endfor; ?>
         </div>
         <?php endif; ?>
+
+        <?php stanray_render_cancel_order_modal(); // shared by every row's Cancel button above ?>
 
     <?php else : ?>
         <div class="stanray-dashboard__empty">

@@ -852,9 +852,47 @@ h2.stanray-dashboard__greeting {
 
 .stanray-orders-table__cell--actions {
     display: flex;
-    gap: 0.5rem;
+    flex-wrap: wrap;
+    gap: 0.4rem;
     justify-content: flex-end;
 }
+
+/* Icon-only row actions (View/Pay/Cancel) — this column is only 110px wide
+   (see .stanray-orders-table__row grid-template-columns above) and can now
+   hold up to 3 actions, so icons read as compact row-level actions instead
+   of full-size text buttons. title/aria-label on each element (orders.php)
+   carry the label for tooltip + screen readers. */
+.stanray-icon-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 26px;
+    height: 26px;
+    padding: 0;
+    background: transparent;
+    color: var(--color-gray-600);
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+.stanray-icon-btn:hover {
+    background: var(--color-black);
+    color: var(--color-white);
+}
+.stanray-icon-btn--primary { color: var(--color-black); }
+.stanray-icon-btn--danger  { color: var(--color-error); }
+.stanray-icon-btn--danger:hover {
+    background: var(--color-error);
+}
+/* Same specificity issue as .stanray-btn above: page.php's inline
+   `.page-body a { color: var(--color-black); }` (0,0,1,1) outranks a bare
+   .stanray-icon-btn class rule (0,0,1,0) on the two link-based actions. */
+.page-body a.stanray-icon-btn { color: var(--color-gray-600); }
+.page-body a.stanray-icon-btn:hover { color: var(--color-white); }
+.page-body a.stanray-icon-btn--primary { color: var(--color-black); }
+.page-body a.stanray-icon-btn--primary:hover { color: var(--color-white); }
 
 /* Pagination */
 .stanray-pagination {
@@ -1064,6 +1102,7 @@ table.shop_table td {
     padding: var(--space-md);
     border-bottom: 1px solid var(--color-gray-200);
     vertical-align: middle;
+    text-align: left;
     color: var(--color-black);
 }
 
@@ -1203,4 +1242,15 @@ h2.stanray-page-title {
     .stanray-orders-table { overflow-x: auto; }
     .stanray-dashboard__welcome { flex-wrap: wrap; }
     .stanray-dashboard__edit-btn { margin-left: 0; }
+    .stanray-points-history { overflow-x: auto; display: block; }
 }
+
+/* ── MY ACCOUNT: Points tab ─────────────────────────────────── */
+.stanray-points-explainer {
+    font-size: var(--font-size-sm);
+    color: var(--color-gray-600);
+    margin-bottom: var(--space-lg);
+}
+.stanray-points-history__amount { text-align: right; font-weight: 500; }
+.stanray-points-history__amount--credit { color: var(--color-success); }
+.stanray-points-history__amount--debit { color: var(--color-error); }

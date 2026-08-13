@@ -1654,10 +1654,13 @@ mark.order-date {
     letter-spacing: 0.06em;
     text-transform: uppercase;
     color: var(--color-black);
-    border-bottom: 1px solid var(--color-black);
+    display: flex;
+    text-align: center;
+    justify-content: center;
     padding-bottom: 2px;
 }
 .coming-soon-page__link:hover { color: var(--color-accent); border-color: var(--color-accent); }
+.coming-soon-page__cta { margin-bottom: var(--space-lg); }
 
 /* ── CONTACT PAGE ────────────────────────────────────────────── */
 .contact-page {
@@ -4084,8 +4087,8 @@ justify-content: space-between;
 
 /* Circular CTA */
 .hb__cta {
-    width: 130px;
-    height: 130px;
+    width: 100px;
+    height: 100px;
     border-radius: 50%;
     background: #ffffff;
     border: 1px solid rgba(0,0,0,0.1);
@@ -4221,8 +4224,15 @@ justify-content: space-between;
         gap: 1rem;
     }
 
-    .hb__stat-num { font-size: 1.6rem; }
-    .hb__cta { width: 80px; height: 80px; }
+    .hb__stat-num { font-size: 1.4rem; }
+    .hb__cta { width: 70px; height: 70px;
+    .hb__cta-label {
+        font-size:0.48rem;
+    }
+    .hb__cta-arrow{
+        font-size:0.76rem;
+    }
+ }
 }
 
 /* ── HERO BANNER MOTION ──────────────────────────────────────── */
