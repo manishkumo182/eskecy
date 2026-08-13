@@ -27,8 +27,12 @@ $hero_name    = $hero_product ? $hero_product->get_name()      : '';
 $hero_url     = $hero_product ? $hero_product->get_permalink() : home_url('/shop');
 $shop_url     = class_exists('WooCommerce') ? wc_get_page_permalink('shop') : home_url('/shop');
 
-$hb_watermark   = get_option( 'stanray_hb_watermark', 'ESKECY' );
-$hb_badge       = get_option( 'stanray_hb_badge', 'SK.26' );
+$hb_watermark      = get_option( 'stanray_hb_watermark', 'ESKECY' );
+$hb_badge          = get_option( 'stanray_hb_badge', 'SK.26' );
+$hb_badge_image_id  = absint( get_option( 'stanray_hb_badge_image', 0 ) );
+$hb_badge_image_src = $hb_badge_image_id ? wp_get_attachment_image_src( $hb_badge_image_id, 'medium' ) : false;
+$hb_badge_image     = $hb_badge_image_src ? $hb_badge_image_src[0] : '';
+$hb_badge_image_ar  = $hb_badge_image_src ? $hb_badge_image_src[1] . ' / ' . $hb_badge_image_src[2] : '1 / 1';
 $hb_spec_tl_key = get_option( 'stanray_hb_spec_tl_key', 'Collection' );
 $hb_spec_tl_val = get_option( 'stanray_hb_spec_tl_val', 'Ultra Premium' );
 $hb_spec_tr_key = get_option( 'stanray_hb_spec_tr_key', 'Shipping' );
@@ -53,11 +57,15 @@ $hb_cta_link    = get_option( 'stanray_hb_cta_link', '' ) ?: $shop_url;
     <!-- Giant watermark word — intentionally overflows both sides -->
     <div class="hb__wm" aria-hidden="true"><?php echo esc_html( $hb_watermark ); ?></div>
 
-    <!-- Transparent card with V.02 and double curve inside -->
+    <!-- Transparent card with badge (text or image) and double curve inside -->
     <div class="hb__card-group" aria-hidden="true">
         <div class="hb__card">
             <div class="hb__card-footer">
-                <span class="hb__card-badge"> <?php echo esc_html( $hb_badge ); ?></span>
+                <?php if ( $hb_badge_image ) : ?>
+                    <span class="hb__card-badge-image" style="--hb-badge-mask:url('<?php echo esc_url( $hb_badge_image ); ?>'); aspect-ratio:<?php echo esc_attr( $hb_badge_image_ar ); ?>;"></span>
+                <?php else : ?>
+                    <span class="hb__card-badge"> <?php echo esc_html( $hb_badge ); ?></span>
+                <?php endif; ?>
                 <svg height="120" width="300" class="hb__card-curve" viewBox="0 0 420 200" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <defs>
                         <linearGradient id="hbLineFade" gradientUnits="userSpaceOnUse" x1="0" y1="180" x2="420" y2="180">

@@ -1640,7 +1640,9 @@ mark.order-date {
 }
 .coming-soon-page__title {
     font-family: var(--font-body);
-    font-size: var(--font-size-2xl);
+    font-size: var(--font-size-
+    
+    xl);
     font-weight: 500;
     margin-bottom: var(--space-20);
 }
@@ -3888,12 +3890,12 @@ justify-content: space-between;
     z-index: 10;
     display: flex;
     flex-direction: column;
-    gap: 0.35rem;
+    gap: 0.5rem;
 }
 
 .hb__card-badge {
     font-family: var(--font-inter);
-    font-size: clamp(1.2rem, 1.9vw, 4.6rem);
+    font-size: clamp(1.2rem, 1.5vw, 4.6rem);
     font-weight: 900;
     text-align: right;
     font-style: italic;
@@ -3905,6 +3907,25 @@ justify-content: space-between;
     display: block;
     width: 100%;
     height: auto;
+}
+
+.hb__card-badge-image {
+    display: block;
+    align-self: center;
+    width: auto;
+    height: clamp(2.6rem, 3.4vw, 5.2rem);
+    max-width: 100%;
+    margin-bottom: -0.6rem;
+    background-color: #e8192c;
+    opacity: 0.4;
+    -webkit-mask-image: var(--hb-badge-mask);
+    mask-image: var(--hb-badge-mask);
+    -webkit-mask-size: 170%;
+    mask-size: 170%;
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+    -webkit-mask-position: center 44%;
+    mask-position: center 44%;
 }
 
 /* ── PRODUCT IMAGE ── */

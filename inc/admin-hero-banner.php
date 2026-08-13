@@ -39,6 +39,12 @@ function stanray_hb_admin_menu() {
 // those pages' render hooks correctly (see notify comment above).
 add_action( 'admin_menu', 'stanray_hb_admin_menu', 5 );
 
+function stanray_hb_admin_enqueue() {
+    if ( ! isset( $_GET['page'] ) || $_GET['page'] !== 'stanray-hero-banner' ) return;
+    wp_enqueue_media();
+}
+add_action( 'admin_enqueue_scripts', 'stanray_hb_admin_enqueue' );
+
 function stanray_hb_get_product_choices() {
     $choices = [ '' => __( '— Automatic (newest featured product) —', 'stanray-custom' ) ];
 
@@ -91,6 +97,7 @@ function stanray_hb_admin_page() {
             update_option( $key, call_user_func( $sanitizer, $_POST[ $key ] ?? '' ) );
         }
         update_option( 'stanray_hb_product', absint( $_POST['stanray_hb_product'] ?? 0 ) );
+        update_option( 'stanray_hb_badge_image', absint( $_POST['stanray_hb_badge_image'] ?? 0 ) );
 
         $saved = true;
     }
@@ -136,7 +143,26 @@ function stanray_hb_admin_page() {
                 </tr>
                 <tr>
                     <th scope="row"><label for="stanray_hb_badge"><?php esc_html_e( 'Card Badge Text', 'stanray-custom' ); ?></label></th>
-                    <td><input type="text" id="stanray_hb_badge" name="stanray_hb_badge" value="<?php echo esc_attr( $v( 'stanray_hb_badge', 'SK.26' ) ); ?>" class="regular-text"></td>
+                    <td>
+                        <input type="text" id="stanray_hb_badge" name="stanray_hb_badge" value="<?php echo esc_attr( $v( 'stanray_hb_badge', 'SK.26' ) ); ?>" class="regular-text">
+                        <p class="description"><?php esc_html_e( 'Used only if no Card Badge Image is set below.', 'stanray-custom' ); ?></p>
+                    </td>
+                </tr>
+                <?php
+                $hb_badge_img_id  = (int) $v( 'stanray_hb_badge_image', 0 );
+                $hb_badge_img_url = $hb_badge_img_id ? wp_get_attachment_image_url( $hb_badge_img_id, 'medium' ) : '';
+                ?>
+                <tr>
+                    <th scope="row"><?php esc_html_e( 'Card Badge Image', 'stanray-custom' ); ?></th>
+                    <td>
+                        <img id="stanray_hb_badge_image_preview" src="<?php echo esc_url( $hb_badge_img_url ); ?>" style="max-width:220px;display:<?php echo $hb_badge_img_url ? 'block' : 'none'; ?>;margin-bottom:10px;border:1px solid #ddd;">
+                        <input type="hidden" id="stanray_hb_badge_image" name="stanray_hb_badge_image" value="<?php echo esc_attr( $hb_badge_img_id ); ?>">
+                        <p>
+                            <button type="button" class="button stanray-hb-upload" data-field="stanray_hb_badge_image"><?php esc_html_e( 'Choose Image', 'stanray-custom' ); ?></button>
+                            <button type="button" class="button stanray-hb-remove" data-field="stanray_hb_badge_image" style="<?php echo $hb_badge_img_url ? '' : 'display:none;'; ?>"><?php esc_html_e( 'Remove', 'stanray-custom' ); ?></button>
+                        </p>
+                        <p class="description"><?php esc_html_e( 'Optional. When set, this image replaces the badge text/curve graphic on the small card.', 'stanray-custom' ); ?></p>
+                    </td>
                 </tr>
             </table>
 
@@ -223,5 +249,33 @@ function stanray_hb_admin_page() {
             <?php submit_button( __( 'Save Changes', 'stanray-custom' ), 'primary', 'stanray_hb_save' ); ?>
         </form>
     </div>
+    <script>
+    jQuery(function ($) {
+        var frame;
+        $('.stanray-hb-upload').on('click', function (e) {
+            e.preventDefault();
+            var field = $(this).data('field');
+            frame = wp.media({
+                title: <?php echo wp_json_encode( __( 'Select Image', 'stanray-custom' ) ); ?>,
+                multiple: false,
+                library: { type: 'image' }
+            });
+            frame.on('select', function () {
+                var attachment = frame.state().get('selection').first().toJSON();
+                $('#' + field).val(attachment.id);
+                $('#' + field + '_preview').attr('src', attachment.url).show();
+                $('.stanray-hb-remove[data-field="' + field + '"]').show();
+            });
+            frame.open();
+        });
+        $('.stanray-hb-remove').on('click', function (e) {
+            e.preventDefault();
+            var field = $(this).data('field');
+            $('#' + field).val('');
+            $('#' + field + '_preview').hide();
+            $(this).hide();
+        });
+    });
+    </script>
     <?php
 }
