@@ -38,13 +38,21 @@ if ( empty($tab_products) ) return;
                 <p class="cat-tabs__eyebrow">New Arrivals</p>
                 <h2 class="cat-tabs__title">The Best<br>Products</h2>
             </div>
-            <div class="cat-tabs__pills" role="tablist" aria-label="Filter by category">
-                <button class="cat-tab-pill is-active" data-cat="all" role="tab" aria-selected="true">All</button>
-                <?php foreach ( $tab_cats as $cat ) : ?>
-                <button class="cat-tab-pill" data-cat="<?php echo esc_attr( $cat->slug ); ?>" role="tab" aria-selected="false">
-                    <?php echo esc_html( $cat->name ); ?>
+            <div class="cat-tabs__pills-nav">
+                <button type="button" class="cat-tabs__pill-arrow cat-tabs__pill-arrow--prev" aria-label="Scroll categories left" aria-controls="catTabsPills">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
                 </button>
-                <?php endforeach; ?>
+                <div class="cat-tabs__pills" id="catTabsPills" role="tablist" aria-label="Filter by category">
+                    <button class="cat-tab-pill is-active" data-cat="all" role="tab" aria-selected="true">All</button>
+                    <?php foreach ( $tab_cats as $cat ) : ?>
+                    <button class="cat-tab-pill" data-cat="<?php echo esc_attr( $cat->slug ); ?>" role="tab" aria-selected="false">
+                        <?php echo esc_html( $cat->name ); ?>
+                    </button>
+                    <?php endforeach; ?>
+                </div>
+                <button type="button" class="cat-tabs__pill-arrow cat-tabs__pill-arrow--next" aria-label="Scroll categories right" aria-controls="catTabsPills">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                </button>
             </div>
         </div>
 
@@ -117,6 +125,39 @@ if ( empty($tab_products) ) return;
     var pills    = document.querySelectorAll('.cat-tab-pill');
     var cards    = Array.prototype.slice.call(document.querySelectorAll('.cat-tabs__card'));
     var pager    = document.getElementById('catTabsPagination');
+    var pillsRow = document.getElementById('catTabsPills');
+    var prevArrow = document.querySelector('.cat-tabs__pill-arrow--prev');
+    var nextArrow = document.querySelector('.cat-tabs__pill-arrow--next');
+
+    function updatePillArrows() {
+        if (!pillsRow || !prevArrow || !nextArrow) return;
+        var maxScroll = pillsRow.scrollWidth - pillsRow.clientWidth;
+
+        if (maxScroll <= 1) {
+            prevArrow.hidden = true;
+            nextArrow.hidden = true;
+            return;
+        }
+        prevArrow.hidden = false;
+        nextArrow.hidden = false;
+        prevArrow.disabled = pillsRow.scrollLeft <= 1;
+        nextArrow.disabled = pillsRow.scrollLeft >= maxScroll - 1;
+    }
+
+    if (pillsRow && prevArrow && nextArrow) {
+        var scrollByAmount = function () {
+            return Math.max(pillsRow.clientWidth * 0.6, 120);
+        };
+        prevArrow.addEventListener('click', function () {
+            pillsRow.scrollBy({ left: -scrollByAmount(), behavior: 'smooth' });
+        });
+        nextArrow.addEventListener('click', function () {
+            pillsRow.scrollBy({ left: scrollByAmount(), behavior: 'smooth' });
+        });
+        pillsRow.addEventListener('scroll', updatePillArrows, { passive: true });
+        window.addEventListener('resize', updatePillArrows);
+        updatePillArrows();
+    }
 
     var activeCat   = 'all';
     var currentPage = 1;
