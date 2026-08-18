@@ -32,7 +32,7 @@ do_action( 'woocommerce_before_reset_password_form' );
                             name="password_1"
                             id="password_1"
                             autocomplete="new-password"
-                            placeholder="min. 8 characters"
+                            placeholder="min. 14 characters"
                             required
                             aria-required="true"
                         >
@@ -58,7 +58,7 @@ do_action( 'woocommerce_before_reset_password_form' );
                             name="password_2"
                             id="password_2"
                             autocomplete="new-password"
-                            placeholder="min. 8 characters"
+                            placeholder="min. 14 characters"
                             required
                             aria-required="true"
                         >
