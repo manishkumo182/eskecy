@@ -1229,33 +1229,50 @@ table.shop_table tfoot td {
     border-bottom: none;
 }
 
-/* Address view cards */
+/* Address view cards — repeat(auto-fill, minmax(...)) instead of a rigid
+   1fr 1fr: with only one saved address (the common case) two equal-width
+   forced columns left half the row empty; cards now wrap only once there's
+   actually room for a second one. */
 .woocommerce-Addresses,
 .woocommerce-columns--addresses {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
     gap: 1.5rem;
-    margin: var(--space-md);
-}
-h2.bill-address-title {
-    font-family: var(--font-body);
-    font-weight: 600;
-    font-size: 20px;
+    margin: 0 0 var(--space-lg);
 }
 
-h2.stanray-page-title {
+.bill-address {
     font-family: var(--font-body);
-    font-size:20px;
-    font-weight: 600;
+    font-size: var(--font-size-sm);
+    color: var(--color-gray-600);
+    margin-bottom: var(--space-lg);
 }
+
+/* .page-body h2/h3 (page.php's inline stylesheet, see the specificity note
+   on .page-body a.stanray-btn above) has the same (class, element)
+   specificity as a bare .stanray-page-title / .woocommerce-Address-title h3
+   and loads after account.css, so it was winning ties: page titles were
+   rendering in the wrong font/weight/size sitewide (not just here), and
+   address cards got page.php's 2rem top margin on their "ADDRESS" heading,
+   which read as an oversized empty gap at the top of every card. Scoping
+   these under .page-body bumps specificity enough to win reliably. */
+.page-body .stanray-page-title {
+    font-family: var(--font-body);
+    font-size: clamp(1.25rem, 2vw, 1.75rem);
+    font-weight: 400;
+    letter-spacing: -0.01em;
+    color: var(--color-black);
+    margin: 0;
+}
+
 .woocommerce-Address {
     background: var(--color-gray-100);
     border: 1px solid var(--color-gray-200);
     padding: var(--space-24);
 }
 
-.woocommerce-Address-title h3,
-.woocommerce-column__title {
+.page-body .woocommerce-Address-title h3,
+.page-body .woocommerce-column__title {
     font-family: var(--font-body);
     font-size: var(--font-size-xs);
     font-weight: 500;
