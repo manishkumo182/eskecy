@@ -500,6 +500,120 @@ h2.stanray-auth__title {
     color: var(--color-accent, #c8a96e);
 }
 
+/* ── Bare WC login form (core global/form-login.php) ────────
+   WooCommerce's own woocommerce_login_form() calls wc_get_template(
+   'global/form-login.php', ...) directly — this theme has no override for
+   that path, so wherever it's used (the order-received "please log in to
+   view this order" gate for orders placed by another account; the checkout
+   "returning customer" toggle) it renders core's bare, unstyled markup
+   instead of the myaccount/form-login.php Sign In panel. Style the core
+   classes directly rather than adding a template override, since the two
+   render contexts (bare page vs. the boxed my-account panel) don't share a
+   wrapper to hang stanray-auth on. */
+.woocommerce-form-login {
+    max-width: 400px;
+    margin: var(--space-lg) 0;
+    padding: var(--space-24);
+    border: 1px solid var(--color-gray-200);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-20);
+}
+
+.woocommerce-form-login .form-row { margin: 0; }
+
+.woocommerce-form-login label {
+    display: block;
+    margin-bottom: 0.4rem;
+    font-family: var(--font-body);
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--color-gray-600);
+}
+
+.woocommerce-form-login label .required { color: var(--color-error); }
+
+.woocommerce-form-login input.input-text {
+    width: 100%;
+    padding: var(--space-12) var(--space-md);
+    border: 1px solid var(--color-gray-200);
+    border-radius: 0;
+    background: var(--color-white);
+    font-family: var(--font-body);
+    font-size: var(--font-size-sm);
+    font-weight: 300;
+    color: var(--color-black);
+    outline: none;
+    transition: border-color var(--transition-fast);
+    -webkit-appearance: none;
+    appearance: none;
+}
+
+.woocommerce-form-login input.input-text:focus { border-color: var(--color-black); }
+
+/* Remember-me checkbox and the submit button share one <p class="form-row">
+   in core's markup — stack them instead of leaving them crammed inline. */
+.woocommerce-form-login .form-row:has(.woocommerce-form-login__rememberme) {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-sm);
+}
+
+.woocommerce-form-login__rememberme {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-family: var(--font-body);
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    color: var(--color-gray-600);
+    cursor: pointer;
+    margin: 0;
+}
+
+.woocommerce-form-login__rememberme input { accent-color: var(--color-black); }
+
+.woocommerce-form-login__submit {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    padding: var(--space-12) var(--space-24);
+    font-family: var(--font-body);
+    font-size: var(--font-size-xs);
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    text-decoration: none;
+    background: var(--color-black);
+    color: var(--color-white);
+    border: 1px solid var(--color-black);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    line-height: 1;
+}
+
+.woocommerce-form-login__submit:hover {
+    background: #c0392b;
+    border-color: #c9d1d93d;
+}
+
+.woocommerce-form-login .lost_password {
+    margin: 0;
+    font-size: 11px;
+}
+
+.woocommerce-form-login .lost_password a {
+    color: var(--color-gray-600);
+    text-decoration: underline;
+    transition: color var(--transition-fast);
+}
+
+.woocommerce-form-login .lost_password a:hover { color: var(--color-black); }
+
 /* ── Dashboard ────────────────────────────────────────────── */
 
 /* Welcome bar */
