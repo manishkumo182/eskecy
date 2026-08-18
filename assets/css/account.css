@@ -512,7 +512,7 @@ h2.stanray-auth__title {
    wrapper to hang stanray-auth on. */
 .woocommerce-form-login {
     max-width: 400px;
-    margin: var(--space-lg) 0;
+    margin: var(--space-lg) auto;
     padding: var(--space-24);
     border: 1px solid var(--color-gray-200);
     display: flex;
