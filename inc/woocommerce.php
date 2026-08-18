@@ -102,6 +102,23 @@ add_filter( 'woocommerce_shipping_fields', function( $fields ) {
     return $fields;
 } );
 
+// woocommerce_billing_fields/shipping_fields (above) get overridden again on
+// the checkout page specifically: WC_Checkout::initialize_checkout_fields()
+// re-applies woocommerce_checkout_fields on top of the array right before
+// rendering, AND this same init path re-runs on every update_order_review
+// AJAX call (triggered on page load and on every field change). Force it
+// here too, on the final merged array, so the red "*" indicator and
+// validate-required class stick through initial load and every AJAX refresh.
+add_filter( 'woocommerce_checkout_fields', function( $fields ) {
+    if ( isset( $fields['billing']['billing_phone'] ) ) {
+        $fields['billing']['billing_phone']['required'] = true;
+    }
+    if ( isset( $fields['shipping']['shipping_phone'] ) ) {
+        $fields['shipping']['shipping_phone']['required'] = true;
+    }
+    return $fields;
+} );
+
 // ─── VARIATION "MAKE A SELECTION" MESSAGE ─────────────────────────────────────
 // Overrides WooCommerce's default variation-selection prompt (shown when the
 // customer clicks Add to Cart before picking a size on a variable product).

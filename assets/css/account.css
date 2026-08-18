@@ -317,7 +317,7 @@ h2.stanray-auth__title {
 
 .stanray-toggle-password {
     position: absolute;
-    top: 34%;
+    top: 50%;
     right: var(--space-sm);
     transform: translateY(-50%);
     display: flex;
