@@ -1208,7 +1208,7 @@ h3.woocommerce-column__title {
     margin-top: 0px!important;
 }
 section.woocommerce-order-details {
-    background-color: #ffffff94;
+  
     padding: 20px;
     margin-bottom: 20px;
 }
@@ -1288,8 +1288,7 @@ h2.stanray-page-title {
     border-bottom: 1px solid var(--color-black);
 }
 .woocommerce-table--order-details tbody tr { border-bottom: 1px solid var(--color-gray-200); }
-.woocommerce-table--order-details td,
-.woocommerce-table--order-details tfoot th {
+.woocommerce-table--order-details td {
     padding: var(--space-md) 0;
     font-size: var(--font-size-sm);
     text-align: left;
@@ -1298,16 +1297,51 @@ h2.stanray-page-title {
 .woocommerce-table--order-details .product-name a { color: var(--color-black); }
 .woocommerce-table--order-details .product-name a:hover { text-decoration: underline; text-underline-offset: 3px; }
 .woocommerce-table--order-details .product-quantity { color: var(--color-gray-600); font-weight: 400; }
-.woocommerce-table--order-details tfoot tr { border-bottom: 1px solid var(--color-gray-200); }
-.woocommerce-table--order-details tfoot tr:last-child { border-bottom: none; }
-.woocommerce-table--order-details tfoot tr:last-child th,
-.woocommerce-table--order-details tfoot tr:last-child td {
-    font-size: var(--font-size-base);
-    font-weight: 600;
+
+/* ── Order totals list (order/order-details.php override) ────────────────
+   Was a <table> tfoot — a real <tr display:flex> row breaks out of the
+   table's border-collapse model (segmented/broken borders, seen live), so
+   this is plain divs below the items table instead. Labels get
+   white-space: nowrap so short two-word labels ("Payment method") never
+   split across lines; only the value wraps if it's ever genuinely long. */
+.stanray-order-totals {
+    margin-bottom: var(--space-2xl);
+}
+.stanray-order-totals__row {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--space-md);
+    padding: var(--space-md) 0;
+    border-bottom: 1px solid var(--color-gray-200);
+}
+.stanray-order-totals__row:last-child { border-bottom: none; }
+.stanray-order-totals__label {
+    font-size: var(--font-size-sm);
+    font-weight: 400;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+.stanray-order-totals__value {
+    font-size: var(--font-size-sm);
+    font-weight: 400;
+    text-align: right;
+}
+.stanray-order-totals__row--total {
     border-top: 1px solid var(--color-black);
     padding-top: var(--space-md);
 }
-.order-actions--heading { font-weight: 500; }
+.stanray-order-totals__row--total .stanray-order-totals__label,
+.stanray-order-totals__row--total .stanray-order-totals__value {
+    font-size: var(--font-size-base);
+    font-weight: 600;
+}
+.stanray-order-totals__row--actions .stanray-order-totals__value {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-sm);
+    justify-content: flex-end;
+}
 .order-actions-button {
     display: inline-flex;
     align-items: center;
@@ -1425,7 +1459,7 @@ h2.stanray-page-title {
 .pdp-gallery__slide.is-active { opacity: 1; pointer-events: auto; }
 section.woocommerce-customer-details {
     background-color: white;
-    padding: 30px;
+    padding: 10px;
 }
 .pdp-gallery__arrow {
     position: absolute;

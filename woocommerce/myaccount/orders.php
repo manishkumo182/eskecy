@@ -65,7 +65,7 @@ $customer_orders = wc_get_orders( apply_filters( 'woocommerce_my_account_my_orde
                     <?php echo esc_html( wc_format_datetime( $order->get_date_created() ) ); ?>
                 </div>
 
-                <div class="stanray-orders-table__cell">
+                <div class="stanray-orders-table__cell stanray-orders-table__cell--status">
                     <span class="stanray-status stanray-status--<?php echo esc_attr( $status ); ?>">
                         <?php echo esc_html( wc_get_order_status_name( $status ) ); ?>
                     </span>

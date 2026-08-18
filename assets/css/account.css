@@ -911,7 +911,7 @@ h2.stanray-dashboard__greeting {
 
 .stanray-orders-table__head {
     display: grid;
-    grid-template-columns: 90px 130px 110px 1fr 100px 110px;
+    grid-template-columns: 90px 130px 110px minmax(0, 1fr) 100px 110px;
     gap: 1rem;
     padding: var(--space-sm) var(--space-20);
     background: var(--color-gray-100);
@@ -924,7 +924,7 @@ h2.stanray-dashboard__greeting {
 
 .stanray-orders-table__row {
     display: grid;
-    grid-template-columns: 90px 130px 110px 1fr 100px 110px;
+    grid-template-columns: 90px 130px 110px minmax(0, 1fr) 100px 110px;
     align-items: center;
     gap: 1rem;
     padding: var(--space-md) var(--space-20);
@@ -1205,7 +1205,7 @@ table.shop_table th {
     letter-spacing: 0.1em;
     text-transform: uppercase;
     color: var(--color-gray-600);
-    padding: var(--space-12) var(--space-md);
+ 
     border-bottom: 1px solid var(--color-gray-200);
     text-align: left;
     background: transparent;
@@ -1213,7 +1213,7 @@ table.shop_table th {
 
 table.woocommerce-table td,
 table.shop_table td {
-    padding: var(--space-md);
+   
     border-bottom: 1px solid var(--color-gray-200);
     vertical-align: middle;
     text-align: left;
@@ -1277,8 +1277,17 @@ h2.stanray-page-title {
 
 /* ── Responsive ───────────────────────────────────────────── */
 @media (max-width: 900px) {
+    /* minmax(0, 1fr), not bare 1fr — a plain 1fr track has an implicit
+       `auto` minimum, which resolves to the widest descendant's min-content
+       width (here, the orders table's fixed-column row further down this
+       page). That silently blew this whole column out past the viewport
+       (sidebar nav included, despite it having no wide content of its own —
+       it just shares this same track), causing real horizontal overflow on
+       phone-width screens. minmax(0, 1fr) is the standard fix: it lets the
+       track actually shrink to the available space instead of growing to
+       fit content, so wrapping/ellipsis/scroll inside it can do their job. */
     .stanray-account-layout {
-        grid-template-columns: 1fr;
+        grid-template-columns: minmax(0, 1fr);
         gap: 1rem;
     }
 
@@ -1325,13 +1334,33 @@ h2.stanray-page-title {
 
     .stanray-quick-nav { grid-template-columns: repeat(2, 1fr); }
 
+    /* The 6-column desktop row (order/date/status/items/total/actions)
+       doesn't divide evenly into a 2-column mobile grid once items/actions
+       span both columns — plain `grid-column: span 2` on those two alone
+       left the auto-placement algorithm stranding status/total in
+       half-empty rows with visible gaps next to them (sparse packing
+       doesn't backfill earlier rows). Named areas place every cell
+       explicitly instead, so there's no gap for auto-flow to get wrong. */
     .stanray-orders-table__head { display: none; }
     .stanray-orders-table__row {
-        grid-template-columns: 1fr 1fr;
-        grid-template-rows: auto auto auto;
+        /* minmax(0, 1fr) — see .stanray-account-layout above for why bare
+           1fr isn't safe here: a long item list or order number can still
+           force this row (and every ancestor track sharing its column)
+           wider than the viewport otherwise. */
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+        grid-template-areas:
+            "order   status"
+            "date    total"
+            "items   items"
+            "actions actions";
+        row-gap: 0.5rem;
     }
-    .stanray-orders-table__cell--items { grid-column: span 2; }
-    .stanray-orders-table__cell--actions { grid-column: span 2; justify-content: flex-start; }
+    .stanray-orders-table__cell--order    { grid-area: order; }
+    .stanray-orders-table__cell--status   { grid-area: status; justify-self: end; }
+    .stanray-orders-table__cell--date     { grid-area: date; }
+    .stanray-orders-table__cell--total    { grid-area: total; justify-self: end; }
+    .stanray-orders-table__cell--items    { grid-area: items; white-space: normal; }
+    .stanray-orders-table__cell--actions  { grid-area: actions; justify-content: flex-start; }
 
     .stanray-order-row {
         grid-template-columns: 1fr auto;
@@ -1356,15 +1385,75 @@ h2.stanray-page-title {
     .stanray-orders-table { overflow-x: auto; }
     .stanray-dashboard__welcome { flex-wrap: wrap; }
     .stanray-dashboard__edit-btn { margin-left: 0; }
-    .stanray-points-history { overflow-x: auto; display: block; }
+    .stanray-points-table { overflow-x: auto; }
 }
 
-/* ── MY ACCOUNT: Points tab ─────────────────────────────────── */
+/* ── MY ACCOUNT: Points tab ───────────────────────────────────
+   Same div-grid pattern as .stanray-orders-table (orders.php) — kept as its
+   own class rather than reused directly since the column count/widths
+   differ (4 columns here vs. 6 on Orders), but every other rule (background,
+   row hover, header treatment, cell typography) is copied 1:1 for visual
+   consistency between the two account history tables. */
 .stanray-points-explainer {
     font-size: var(--font-size-sm);
     color: var(--color-gray-600);
     margin-bottom: var(--space-lg);
 }
-.stanray-points-history__amount { text-align: right; font-weight: 500; }
-.stanray-points-history__amount--credit { color: var(--color-success); }
-.stanray-points-history__amount--debit { color: var(--color-error); }
+
+.stanray-points-table {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    background: var(--color-gray-200);
+    border: 1px solid var(--color-gray-200);
+}
+
+.stanray-points-table__head {
+    display: grid;
+    grid-template-columns: 140px minmax(0, 1fr) 110px 110px;
+    gap: 1rem;
+    padding: var(--space-sm) var(--space-20);
+    background: var(--color-gray-100);
+    font-family: var(--font-body);
+    font-size: 12px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--color-gray-400);
+}
+
+.stanray-points-table__row {
+    display: grid;
+    grid-template-columns: 140px minmax(0, 1fr) 110px 110px;
+    align-items: center;
+    gap: 1rem;
+    padding: var(--space-md) var(--space-20);
+    background: var(--color-white);
+    transition: background var(--transition-fast);
+}
+
+.stanray-points-table__row:hover { background: var(--color-gray-100); }
+
+.stanray-points-table__cell {
+    font-family: var(--font-body);
+    font-size: var(--font-size-xs);
+    color: var(--color-gray-800);
+    letter-spacing: 0.02em;
+}
+
+.stanray-points-table__cell--date { color: var(--color-gray-600); }
+
+.stanray-points-table__cell--amount {
+    text-align: right;
+    font-weight: 500;
+}
+.stanray-points-table__cell--credit { color: var(--color-success); }
+.stanray-points-table__cell--debit { color: var(--color-error); }
+
+@media (max-width: 900px) {
+    .stanray-points-table__head { display: none; }
+    .stanray-points-table__row {
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+        grid-template-rows: auto auto;
+    }
+    .stanray-points-table__cell--amount { text-align: left; }
+}

@@ -60,39 +60,47 @@ $labels = [
             <a href="<?php echo esc_url( wc_get_page_permalink( 'shop' ) ); ?>" class="stanray-btn"><?php esc_html_e( 'Start Shopping', 'stanray-custom' ); ?></a>
         </div>
     <?php else : ?>
-        <table class="stanray-points-history shop_table">
-            <thead>
-                <tr>
-                    <th><?php esc_html_e( 'Date', 'stanray-custom' ); ?></th>
-                    <th><?php esc_html_e( 'Activity', 'stanray-custom' ); ?></th>
-                    <th><?php esc_html_e( 'Order', 'stanray-custom' ); ?></th>
-                    <th><?php esc_html_e( 'Points', 'stanray-custom' ); ?></th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php foreach ( $history as $entry ) :
-                    $type      = $entry['type'] ?? '';
-                    $points    = (int) ( $entry['points'] ?? 0 );
-                    $order_id  = absint( $entry['order_id'] ?? 0 );
-                    $order     = $order_id ? wc_get_order( $order_id ) : null;
-                    $is_credit = in_array( $type, [ 'earned', 'redeem_reversed' ], true );
-                    ?>
-                    <tr>
-                        <td><?php echo esc_html( $entry['date'] ? date_i18n( get_option( 'date_format' ), strtotime( $entry['date'] ) ) : '' ); ?></td>
-                        <td><?php echo esc_html( $labels[ $type ] ?? ucfirst( $type ) ); ?></td>
-                        <td>
-                            <?php if ( $order ) : ?>
-                                <a href="<?php echo esc_url( $order->get_view_order_url() ); ?>">#<?php echo esc_html( $order->get_order_number() ); ?></a>
-                            <?php else : ?>
-                                &mdash;
-                            <?php endif; ?>
-                        </td>
-                        <td class="stanray-points-history__amount stanray-points-history__amount--<?php echo $is_credit ? 'credit' : 'debit'; ?>">
-                            <?php echo $is_credit ? '+' : '-'; ?><?php echo esc_html( number_format_i18n( $points ) ); ?>
-                        </td>
-                    </tr>
-                <?php endforeach; ?>
-            </tbody>
-        </table>
+        <div class="stanray-points-table">
+
+            <div class="stanray-points-table__head">
+                <span><?php esc_html_e( 'Date', 'stanray-custom' ); ?></span>
+                <span><?php esc_html_e( 'Activity', 'stanray-custom' ); ?></span>
+                <span><?php esc_html_e( 'Order', 'stanray-custom' ); ?></span>
+                <span><?php esc_html_e( 'Points', 'stanray-custom' ); ?></span>
+            </div>
+
+            <?php foreach ( $history as $entry ) :
+                $type      = $entry['type'] ?? '';
+                $points    = (int) ( $entry['points'] ?? 0 );
+                $order_id  = absint( $entry['order_id'] ?? 0 );
+                $order     = $order_id ? wc_get_order( $order_id ) : null;
+                $is_credit = in_array( $type, [ 'earned', 'redeem_reversed' ], true );
+                ?>
+                <div class="stanray-points-table__row">
+
+                    <div class="stanray-points-table__cell stanray-points-table__cell--date">
+                        <?php echo esc_html( $entry['date'] ? date_i18n( get_option( 'date_format' ), strtotime( $entry['date'] ) ) : '' ); ?>
+                    </div>
+
+                    <div class="stanray-points-table__cell">
+                        <?php echo esc_html( $labels[ $type ] ?? ucfirst( $type ) ); ?>
+                    </div>
+
+                    <div class="stanray-points-table__cell">
+                        <?php if ( $order ) : ?>
+                            <a href="<?php echo esc_url( $order->get_view_order_url() ); ?>" class="stanray-order-number">#<?php echo esc_html( $order->get_order_number() ); ?></a>
+                        <?php else : ?>
+                            &mdash;
+                        <?php endif; ?>
+                    </div>
+
+                    <div class="stanray-points-table__cell stanray-points-table__cell--amount stanray-points-table__cell--<?php echo $is_credit ? 'credit' : 'debit'; ?>">
+                        <?php echo $is_credit ? '+' : '-'; ?><?php echo esc_html( number_format_i18n( $points ) ); ?>
+                    </div>
+
+                </div>
+            <?php endforeach; ?>
+
+        </div>
     <?php endif; ?>
 </div>

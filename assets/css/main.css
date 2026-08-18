@@ -154,7 +154,9 @@ a.btn.btn--primary.order-action:hover {
     background: transparent;
     color: var(--color-black);
     border-color: var(--color-black);
+    margin-top:10px;
 }
+
 .btn--outline:hover {
     background: var(--color-black);
     color: var(--color-white);
