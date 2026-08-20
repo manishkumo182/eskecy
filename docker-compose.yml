@@ -65,7 +65,9 @@ services:
 
 volumes:
   eskecy_db_data:
+    name: eskecy_db_data
   eskecy_wp_data:
+    name: eskecy_wp_data
 
 networks:
   eskecy:
