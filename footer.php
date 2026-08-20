@@ -1,49 +1,24 @@
 <!-- ── Footer Perks ─────────────────────────────────────────────────── -->
+<?php $footer_perks = stanray_fp_get_perks(); ?>
+<?php if ( ! empty( $footer_perks ) ) : ?>
 <section class="footer-perks" aria-label="Store guarantees">
     <div class="footer-perks__inner">
-
+        <?php foreach ( $footer_perks as $perk ) : ?>
         <div class="footer-perks__item">
             <span class="footer-perks__icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13"></rect><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon><circle cx="5.5" cy="18.5" r="2.5"></circle><circle cx="18.5" cy="18.5" r="2.5"></circle></svg>
+                <?php echo stanray_fp_icon_svg( $perk['icon'] ?? 'truck' ); ?>
             </span>
             <div>
-                <h4 class="footer-perks__title">Free Dispatch</h4>
-                <p class="footer-perks__desc">All orders above $200</p>
+                <h4 class="footer-perks__title"><?php echo esc_html( $perk['title'] ?? '' ); ?></h4>
+                <?php if ( ! empty( $perk['desc'] ) ) : ?>
+                <p class="footer-perks__desc"><?php echo esc_html( $perk['desc'] ); ?></p>
+                <?php endif; ?>
             </div>
         </div>
-
-        <div class="footer-perks__item">
-            <span class="footer-perks__icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"></polyline><polyline points="23 20 23 14 17 14"></polyline><path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"></path></svg>
-            </span>
-            <div>
-                <h4 class="footer-perks__title">Easy Returns</h4>
-                <p class="footer-perks__desc">30-day free returns</p>
-            </div>
-        </div>
-
-        <div class="footer-perks__item">
-            <span class="footer-perks__icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 1 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
-            </span>
-            <div>
-                <h4 class="footer-perks__title">24/7 Enquiry</h4>
-                <p class="footer-perks__desc">Live chat &amp; secure tickets</p>
-            </div>
-        </div>
-
-        <div class="footer-perks__item">
-            <span class="footer-perks__icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
-            </span>
-            <div>
-                <h4 class="footer-perks__title">Worldwide Shipping</h4>
-                <p class="footer-perks__desc">Delivered to your door</p>
-            </div>
-        </div>
-
+        <?php endforeach; ?>
     </div>
 </section>
+<?php endif; ?>
 
 <!-- ── Site Footer ──────────────────────────────────────────────────── -->
 <footer id="site-footer" class="site-footer" role="contentinfo">
@@ -113,21 +88,17 @@
             </div>
 
             <!-- Support -->
+            <?php $support_links = stanray_fsl_get_links(); ?>
+            <?php if ( ! empty( $support_links ) ) : ?>
             <div class="footer-col">
                 <h4 class="footer-col__title">Support</h4>
                 <ul class="footer-col__list">
-                    <?php
-                    $support_links = [
-                        
-                        'Shipping Info'   => get_theme_mod( 'footer_shipping_url', home_url( '/shipping' ) ),
-                        'Refund Policy'   => get_theme_mod( 'footer_returns_url',  home_url( '/refund' ) ),
-                        
-                    ];
-                    foreach ( $support_links as $label => $url ) : ?>
-                    <li><a href="<?php echo esc_url( $url ); ?>"><?php echo esc_html( $label ); ?></a></li>
+                    <?php foreach ( $support_links as $link ) : ?>
+                    <li><a href="<?php echo esc_url( $link['url'] ?? '#' ); ?>"><?php echo esc_html( $link['label'] ?? '' ); ?></a></li>
                     <?php endforeach; ?>
                 </ul>
             </div>
+            <?php endif; ?>
 
             <!-- Follow -->
             <div class="footer-col">

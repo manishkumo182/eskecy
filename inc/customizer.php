@@ -46,6 +46,17 @@ function stanray_customizer_register( $wp_customize ) {
         'panel' => 'stanray_options',
     ] );
 
+    $wp_customize->add_setting( 'footer_tagline', [
+        'default'           => get_bloginfo( 'description' ),
+        'sanitize_callback' => 'sanitize_text_field',
+    ] );
+    $wp_customize->add_control( 'footer_tagline', [
+        'label'       => __( 'Tagline', 'stanray-custom' ),
+        'description' => __( 'Shown under the logo in the footer.', 'stanray-custom' ),
+        'section'     => 'stanray_footer',
+        'type'        => 'text',
+    ] );
+
     $wp_customize->add_setting( 'footer_copyright', [
         'default'           => '© ' . date('Y') . ' Your Brand. All rights reserved.',
         'sanitize_callback' => 'sanitize_text_field',

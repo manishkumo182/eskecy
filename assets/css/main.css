@@ -1382,7 +1382,7 @@ input#wp-block-search__input-1 { padding: var(--space-sm); border-radius: 6px; m
 }
 .footer-perks__inner {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
     gap: 2rem;
     padding: 2.75rem 3rem;
 }
