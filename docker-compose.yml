@@ -1,0 +1,72 @@
+name: eskecy
+
+services:
+  db:
+    image: mysql:8.0
+    container_name: eskecy_db
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_USER: ${DB_USER}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+    volumes:
+      - eskecy_db_data:/var/lib/mysql
+    networks:
+      - eskecy
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${DB_ROOT_PASSWORD}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  wordpress:
+    build: .
+    image: eskecy-wordpress:latest
+    container_name: eskecy_wordpress
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      WORDPRESS_DB_HOST: db:3306
+      WORDPRESS_DB_NAME: ${DB_NAME}
+      WORDPRESS_DB_USER: ${DB_USER}
+      WORDPRESS_DB_PASSWORD: ${DB_PASSWORD}
+      WORDPRESS_TABLE_PREFIX: ${TABLE_PREFIX:-wp_}
+      WORDPRESS_DEBUG: ${WORDPRESS_DEBUG:-0}
+    volumes:
+      - eskecy_wp_data:/var/www/html
+    ports:
+      - "${HTTP_PORT:-8080}:80"
+    networks:
+      - eskecy
+
+  # One-off WP-CLI helper. Not started by `docker compose up`.
+  # Use it for first-time setup: docker compose run --rm wpcli wp <command>
+  wpcli:
+    image: wordpress:cli-php8.2
+    container_name: eskecy_wpcli
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      WORDPRESS_DB_HOST: db:3306
+      WORDPRESS_DB_NAME: ${DB_NAME}
+      WORDPRESS_DB_USER: ${DB_USER}
+      WORDPRESS_DB_PASSWORD: ${DB_PASSWORD}
+      WORDPRESS_TABLE_PREFIX: ${TABLE_PREFIX:-wp_}
+    volumes:
+      - eskecy_wp_data:/var/www/html
+    networks:
+      - eskecy
+    profiles:
+      - cli
+
+volumes:
+  eskecy_db_data:
+  eskecy_wp_data:
+
+networks:
+  eskecy:
+    name: eskecy_network

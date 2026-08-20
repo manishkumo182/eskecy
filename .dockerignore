@@ -1,0 +1,9 @@
+.git
+.gitignore
+.DS_Store
+_archive
+README.md
+docker-compose*.yml
+.env
+.env.example
+Dockerfile

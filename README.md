@@ -171,6 +171,75 @@ Recommended local environments:
 
 ---
 
+## 🐳 Docker Deployment
+
+This repo includes a `Dockerfile` and `docker-compose.yml` that build a full
+WordPress + MySQL stack with this theme baked in, ready to run on a VPS.
+
+### 1. Configure environment
+
+```bash
+cp .env.example .env
+```
+
+Edit `.env` and set real values for `DB_PASSWORD`, `DB_ROOT_PASSWORD`,
+`SITE_URL` (your domain or VPS IP), `ADMIN_PASSWORD`, etc. Never commit `.env`.
+
+### 2. Build and start
+
+```bash
+docker compose up -d --build
+```
+
+WordPress will be reachable on `http://<vps-ip>:${HTTP_PORT}` (default
+`8080`). Put Nginx/Caddy/Traefik in front on ports 80/443 for a real domain
+and TLS if you need HTTPS — this compose file only exposes the app port.
+
+### 3. First-time install (via WP-CLI)
+
+Run once, after the containers are healthy:
+
+```bash
+docker compose run --rm wpcli wp core install \
+  --url="$SITE_URL" \
+  --title="$SITE_TITLE" \
+  --admin_user="$ADMIN_USER" \
+  --admin_password="$ADMIN_PASSWORD" \
+  --admin_email="$ADMIN_EMAIL"
+
+docker compose run --rm wpcli wp theme activate stanray-theme
+docker compose run --rm wpcli wp plugin install woocommerce --activate
+docker compose run --rm wpcli wp plugin install advanced-custom-fields --activate
+```
+
+(`wpcli` reads `$SITE_URL` etc. from your shell — run `set -a; source .env; set +a`
+first, or pass the values inline.)
+
+Then finish the WooCommerce setup wizard, menus, and homepage as described
+above in **🚀 Installation** (steps 4–7).
+
+### 4. Updating the theme after a code change
+
+The theme is copied into the image at build time, so redeploy with:
+
+```bash
+docker compose up -d --build wordpress
+```
+
+### 5. Data persistence & backups
+
+- `wp_data` volume — WordPress core, uploads, plugins, themes (includes this theme after build).
+- `db_data` volume — MySQL data.
+
+Back these up regularly, e.g.:
+
+```bash
+docker compose exec db sh -c 'exec mysqldump -u root -p"$MYSQL_ROOT_PASSWORD" --all-databases' > backup.sql
+docker run --rm -v eskecy_wp_data:/data -v "$PWD":/backup alpine tar czf /backup/wp-content-backup.tar.gz -C /data wp-content
+```
+
+---
+
 ## 📝 Notes
 
 - The theme **disables all default WooCommerce CSS** (`woocommerce_enqueue_styles` returns empty) — all WC styles are our own in `woocommerce.css`
