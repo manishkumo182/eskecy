@@ -675,6 +675,11 @@ h2.stanray-dashboard__greeting {
     margin-bottom: var(--space-lg);
 }
 
+/* Modifier for stat rows with only 2 items (e.g. My Points) — the base
+   class defaults to 3 columns for the account dashboard's 3-stat row, so a
+   2-item row needs its own column count instead of leaving an empty cell. */
+.stanray-stats--2col { grid-template-columns: repeat(2, 1fr); }
+
 .stanray-stat {
     background: var(--color-white);
     padding: var(--space-24);
@@ -1348,6 +1353,7 @@ table.shop_table tfoot td {
 
     .stanray-stats { grid-template-columns: 1fr 1fr; }
     .stanray-stats .stanray-stat:last-child { grid-column: span 2; }
+    .stanray-stats--2col .stanray-stat:last-child { grid-column: auto; }
 
     .stanray-quick-nav { grid-template-columns: repeat(2, 1fr); }
 

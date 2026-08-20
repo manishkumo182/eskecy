@@ -26,7 +26,7 @@ $labels = [
     <h2 class="stanray-page-title"><?php esc_html_e( 'My Points', 'stanray-custom' ); ?></h2>
 </div>
 
-<div class="stanray-stats">
+<div class="stanray-stats stanray-stats--2col">
     <div class="stanray-stat">
         <span class="stanray-stat__number"><?php echo esc_html( number_format_i18n( $balance ) ); ?></span>
         <span class="stanray-stat__label"><?php esc_html_e( 'Points Balance', 'stanray-custom' ); ?></span>
