@@ -214,6 +214,7 @@ require_once STANRAY_DIR . '/inc/customizer.php';
 require_once STANRAY_DIR . '/inc/admin-hero-banner.php';
 require_once STANRAY_DIR . '/inc/admin-select-style.php';
 require_once STANRAY_DIR . '/inc/admin-shop-the-look.php';
+require_once STANRAY_DIR . '/inc/admin-explore-page.php';
 require_once STANRAY_DIR . '/inc/admin-homepage-video.php';
 require_once STANRAY_DIR . '/inc/admin-events-hero.php';
 require_once STANRAY_DIR . '/inc/admin-about-page.php';
@@ -670,6 +671,27 @@ function stanray_gallery_lightbox_assets() {
     }
 }
 add_action( 'wp_enqueue_scripts', 'stanray_gallery_lightbox_assets' );
+
+function stanray_explore_assets() {
+    if ( ! is_page_template( [ 'page-explore.php', 'page-studio.php' ] ) ) return;
+
+    wp_enqueue_style(
+        'stanray-explore',
+        STANRAY_URI . '/assets/css/explore.css',
+        [ 'stanray-main' ],
+        STANRAY_VERSION
+    );
+
+    wp_enqueue_script(
+        'stanray-explore',
+        STANRAY_URI . '/assets/js/explore.js',
+        [ 'stanray-main' ],
+        STANRAY_VERSION,
+        true
+    );
+}
+add_action( 'wp_enqueue_scripts', 'stanray_explore_assets' );
+
 function enqueue_swiper_assets() {
     wp_enqueue_style('swiper-css', 'https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css');
     wp_enqueue_script('swiper-js', 'https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js', [], null, true);

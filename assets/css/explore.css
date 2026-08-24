@@ -1,0 +1,396 @@
+/* ============================================================
+   ESKECY — Explore
+   assets/css/explore.css
+   Two separate pages, shared look: the Explore page (the dusk
+   entrance — click the door) and the Studio page (the shoppable
+   room). explore.js fades the page out just before navigating
+   between them so the hand-off still feels like one flow.
+   ============================================================ */
+
+.explore {
+    position: relative;
+    width: 100%;
+    background: #0a0a0a;
+}
+
+.explore__scene {
+    position: relative;
+    width: 100%;
+    min-height: 100vh;
+    overflow: hidden;
+    background: #0a0a0a;
+    opacity: 1;
+    transition: opacity 0.35s ease;
+}
+
+/* Applied to #explore-root just before a door/back link navigates away,
+   so the page fades to black instead of cutting instantly. */
+.explore.is-leaving .explore__scene {
+    opacity: 0;
+}
+
+.explore__bg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.explore__vignette {
+    position: absolute;
+    inset: 0;
+    background:
+        radial-gradient(ellipse at 55% 46%, rgba(0,0,0,0) 30%, rgba(0,0,0,0.55) 100%),
+        linear-gradient(180deg, rgba(0,0,0,.5) 0%, rgba(0,0,0,0) 22%, rgba(0,0,0,0) 70%, rgba(0,0,0,.45) 100%);
+    pointer-events: none;
+}
+
+/* ── Corner watermark, matches the "Shop the Look" section's own tag ── */
+.explore__badge {
+    position: absolute;
+    top: 2rem;
+    left: 2rem;
+    z-index: 4;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-family: var(--font-mono);
+    font-size: 0.62rem;
+    font-weight: 500;
+    letter-spacing: 0.18em;
+    color: rgba(255,255,255,0.75);
+    text-transform: uppercase;
+    pointer-events: none;
+}
+
+.explore__badge-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #e8192c;
+}
+
+/* ── Door hotspot (entrance scene) ─────────────────────────────── */
+.explore__door {
+    position: absolute;
+    top: 49%;
+    left: 58%;
+    width: 11%;
+    max-width: 160px;
+    aspect-ratio: 3 / 5;
+    transform: translate(-50%, -50%);
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 5;
+    text-decoration: none;
+}
+
+.explore__door-ring {
+    display: block;
+    width: 82%;
+    height: 92%;
+    border-radius: 46% / 30%;
+   
+}
+
+@keyframes explore-door-pulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(255,197,120,0.5), 0 0 42px 10px rgba(255,197,120,0.3); }
+    50%      { box-shadow: 0 0 0 14px rgba(255,197,120,0), 0 0 62px 20px rgba(255,197,120,0.55); }
+}
+
+
+.explore__door:focus-visible .explore__door-ring {
+    box-shadow: 0 0 0 3px #e8192c;
+}
+
+.explore__prompt {
+    position: absolute;
+    top: 68%;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 5;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    color: #fff;
+    text-shadow: 0 2px 12px rgba(0,0,0,.6);
+    background: none;
+    border: none;
+    padding: 10px 18px 16px;
+    margin: 0;
+    cursor: pointer;
+    text-decoration: none;
+}
+
+.explore__prompt-label {
+    font-family: var(--font-inter);
+    font-weight: 900;
+    font-size: 0.85rem;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    transition: color 0.2s ease;
+}
+
+.explore__prompt-arrow {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 1.5px solid rgba(255,255,255,0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+}
+
+.explore__prompt:hover .explore__prompt-label,
+.explore__prompt:focus-visible .explore__prompt-label,
+.explore__door:hover ~ .explore__prompt .explore__prompt-label {
+    color: #0d0d0d;
+}
+
+.explore__prompt:hover .explore__prompt-arrow,
+.explore__prompt:focus-visible .explore__prompt-arrow,
+.explore__door:hover ~ .explore__prompt .explore__prompt-arrow {
+    background: #0d0d0d;
+    border-color:#0d0d0d;
+    transform: scale(1.08);
+}
+
+.explore__prompt-chevron {
+    animation: explore-chevron-bounce 1.6s ease-in-out infinite;
+}
+
+.explore__prompt:hover .explore__prompt-chevron,
+.explore__prompt:focus-visible .explore__prompt-chevron {
+    animation-play-state: paused;
+    transform: translateY(0);
+}
+
+@keyframes explore-chevron-bounce {
+    0%, 100% { transform: translateY(0);   opacity: .7; }
+    50%      { transform: translateY(-4px); opacity: 1; }
+}
+
+/* ── Back-to-entrance (studio scene) ───────────────────────────── */
+.explore__back {
+    position: absolute;
+    top: 2rem;
+    right: 2rem;
+    z-index: 6;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: #111;
+    border: none;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 6px 16px rgba(0,0,0,.4);
+    transition: background 0.2s;
+    text-decoration: none;
+}
+
+.explore__back:hover {
+    background: #e8192c;
+}
+
+/* ── Shoppable hotspots (studio scene) ─────────────────────────── */
+.explore__hotspot {
+    position: absolute;
+    transform: translate(-50%, -50%);
+    z-index: 6;
+}
+
+.explore__pin {
+    position: relative;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.94);
+    border: none;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 6px 18px rgba(0,0,0,.4);
+    font-family: var(--font-inter);
+    font-size: 20px;
+    font-weight: 300;
+    color: #111;
+    line-height: 1;
+    transition: transform 0.2s ease, background 0.2s ease, color 0.2s ease;
+}
+
+.explore__pin::before {
+    content: '';
+    position: absolute;
+    inset: -8px;
+    border-radius: 50%;
+    border: 1.5px solid rgba(255,255,255,0.5);
+    animation: explore-pin-pulse 2.4s ease-out infinite;
+    pointer-events: none;
+}
+
+@keyframes explore-pin-pulse {
+    0%   { opacity: 0.9; transform: scale(1); }
+    100% { opacity: 0;   transform: scale(1.7); }
+}
+
+.explore__pin:hover {
+    transform: scale(1.12);
+}
+
+.explore__hotspot.is-open .explore__pin {
+    background: #e8192c;
+    color: #fff;
+    transform: rotate(45deg);
+}
+
+.explore__hotspot.is-open .explore__pin::before {
+    display: none;
+}
+
+/* ── Product card ───────────────────────────────────────────────── */
+.explore__card {
+    position: absolute;
+    bottom: calc(100% + 14px);
+    left: 50%;
+    transform: translateX(-50%) translateY(6px);
+    width: 236px;
+    background: #fafafa;
+    border-radius: 14px;
+    padding: 14px;
+    box-shadow: 0 18px 40px rgba(0,0,0,.5);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.explore__hotspot.is-open .explore__card {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateX(-50%) translateY(0);
+}
+
+.explore__card-close {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: #111;
+    border: none;
+    color: #fafafa;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+.explore__card-body {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+}
+
+.explore__card-thumb {
+    width: 52px;
+    height: 52px;
+    flex: 0 0 auto;
+    border-radius: 8px;
+    object-fit: cover;
+    background: #e8e8e4;
+}
+
+.explore__card-name {
+    font-family: var(--font-inter);
+    font-weight: 900;
+    font-size: 0.75rem;
+    letter-spacing: -0.01em;
+    text-transform: uppercase;
+    color: #111;
+    line-height: 1.3;
+}
+
+.explore__card-price {
+    font-family: var(--font-inter);
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #e8192c;
+    margin-top: 5px;
+}
+
+.explore__card-price .woocommerce-Price-amount { color: inherit; }
+
+.explore__card-add {
+    display: block;
+    width: 100%;
+    box-sizing: border-box;
+    margin-top: 12px;
+    background: #111;
+    color: #fafafa;
+    border: none;
+    text-align: center;
+    text-decoration: none;
+    font-family: var(--font-inter);
+    font-size: 0.6rem;
+    letter-spacing: 0.14em;
+    font-weight: 700;
+    text-transform: uppercase;
+    padding: 10px 0;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.explore__card-add--link {
+    color: #fafafa !important;
+}
+
+.explore__card-add:hover {
+    background: #e8192c;
+}
+
+.explore__card-add.is-loading {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+.explore__card-view {
+    display: block;
+    text-align: center;
+    margin-top: 8px;
+    font-family: var(--font-inter);
+    font-size: 0.6rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: #888;
+    text-decoration: none;
+}
+
+.explore__card-view:hover {
+    color: #e8192c;
+}
+
+/* ── Responsive ─────────────────────────────────────────────────── */
+@media (max-width: 640px) {
+    .explore__door { width: 20%; }
+    .explore__badge,
+    .explore__back { top: 1.2rem; }
+    .explore__badge { left: 1.2rem; font-size: 0.55rem; }
+    .explore__back { right: 1.2rem; }
+    .explore__card { width: 208px; }
+}
