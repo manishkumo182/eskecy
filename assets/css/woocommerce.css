@@ -251,6 +251,62 @@ button[name="add-to-cart"] {
 .woocommerce-checkout select:focus,
 .woocommerce-checkout textarea:focus { border-color: var(--color-black); outline: none; }
 
+/* ── SELECT2 (country/state dropdowns) ──────────────────────────
+   WooCommerce swaps the plain <select> above for a select2 widget — the
+   actual thing rendered on screen for Country/State — so the flat,
+   square-cornered look set on `select` just above never reaches it; select2
+   ships its own default skin (rounded corners, grey border, different
+   height), which is what was showing through inconsistent with every other
+   field on checkout and the My Account address forms. Restyled here to
+   match. Unscoped to .select2-container (not nested under .woocommerce-*)
+   since this stylesheet only loads on WooCommerce-context pages anyway (see
+   the enqueue conditions in functions.php). */
+.select2-container--default .select2-selection--single {
+    height: auto;
+    border: 1px solid var(--color-gray-200);
+    border-radius: 0;
+    background: var(--color-white);
+    padding: var(--space-12);
+    outline: none;
+    transition: border-color var(--transition-fast);
+}
+.select2-container--default.select2-container--focus .select2-selection--single,
+.select2-container--default.select2-container--open .select2-selection--single {
+    border-color: var(--color-black);
+}
+.select2-container--default .select2-selection--single .select2-selection__rendered {
+    padding: 0 20px 0 0;
+    line-height: normal;
+    font-size: var(--font-size-sm);
+    color: var(--color-black);
+}
+.select2-container--default .select2-selection--single .select2-selection__arrow {
+    height: 100%;
+    top: 0;
+    right: var(--space-12);
+}
+.select2-container--default .select2-selection--single .select2-selection__arrow b {
+    border-color: var(--color-gray-600) transparent transparent transparent;
+}
+.select2-container--default.select2-container--open .select2-selection--single .select2-selection__arrow b {
+    border-color: transparent transparent var(--color-black) transparent;
+}
+.select2-dropdown {
+    border: 1px solid var(--color-gray-200);
+    border-radius: 0;
+    font-family: var(--font-body);
+    font-size: var(--font-size-sm);
+}
+.select2-container--default .select2-search--dropdown .select2-search__field {
+    border: 1px solid var(--color-gray-200);
+    border-radius: 0;
+    padding: var(--space-sm);
+}
+.select2-container--default .select2-results__option--highlighted[aria-selected] {
+    background: var(--color-black);
+    color: var(--color-white);
+}
+
 
 #place_order {
     width: 100%;
@@ -1851,4 +1907,10 @@ section.related.products {
     color: var(--color-gray-600);
 }
 .points-redeem-widget__message.is-error { color: var(--color-error); }
+
+/* ── CHECKOUT: "Same as billing address" button ──────────────────────────── */
+.stanray-same-as-billing {
+    display: inline-block;
+    margin-bottom: var(--space-md);
+}
 

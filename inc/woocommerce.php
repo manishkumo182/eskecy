@@ -456,6 +456,16 @@ add_filter( 'woocommerce_checkout_fields', function( $fields ) {
 remove_action( 'woocommerce_before_checkout_form', 'woocommerce_checkout_coupon_form', 10 );
 add_action( 'woocommerce_review_order_before_submit', 'woocommerce_checkout_coupon_form', 10 );
 
+// ─── CHECKOUT: "Same as billing address" button ──────────────────────────────
+// Copies the billing fields the customer already filled in into the shipping
+// fields when they open "Ship to a different address?", instead of making
+// them retype an address that's often identical. Rendered before the fields
+// (not after) so it's the first thing seen when the shipping form opens.
+// Click handler: assets/js/main.js, "CHECKOUT: Same as billing address" section.
+add_action( 'woocommerce_before_checkout_shipping_form', function() {
+    echo '<button type="button" class="stanray-btn stanray-btn--outline stanray-btn--xs stanray-same-as-billing">' . esc_html__( 'Same as billing address', 'stanray-custom' ) . '</button>';
+} );
+
 // ─── MY ACCOUNT: Order details — status as a colored badge in the table ───────
 // myaccount/view-order.php's opening line ("Order #X was placed on Y and is
 // currently Z.") buries the status as plain text. Drop that clause and show

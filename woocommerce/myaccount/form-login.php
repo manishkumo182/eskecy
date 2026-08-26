@@ -15,10 +15,11 @@ defined( 'ABSPATH' ) || exit;
 do_action( 'woocommerce_before_customer_login_form' );
 ?>
 
+<?php $stanray_auth_active_tab = function_exists( 'stanray_auth_active_tab' ) ? stanray_auth_active_tab() : 'login'; ?>
 <div class="stanray-auth">
 
     <!-- ── Left: Login ─────────────────────────────────────── -->
-    <div class="stanray-auth__panel">
+    <div class="stanray-auth__panel stanray-auth__panel--login<?php echo 'login' === $stanray_auth_active_tab ? ' is-active-tab' : ''; ?>" data-tab-panel="login">
         <div class="stanray-auth__panel-inner">
 
             <h2 class="stanray-auth__title">Sign In</h2>
@@ -95,7 +96,7 @@ do_action( 'woocommerce_before_customer_login_form' );
 
     <!-- ── Right: Register ─────────────────────────────────── -->
     <?php if ( 'yes' === get_option( 'woocommerce_enable_myaccount_registration' ) ) : ?>
-    <div class="stanray-auth__panel">
+    <div class="stanray-auth__panel stanray-auth__panel--register<?php echo 'register' === $stanray_auth_active_tab ? ' is-active-tab' : ''; ?>" data-tab-panel="register">
         <div class="stanray-auth__panel-inner">
 
             <h2 class="stanray-auth__title">Create Account</h2>

@@ -2,17 +2,15 @@
 /**
  * Checkout Form
  *
- * Overrides WooCommerce core's checkout/form-checkout.php. The only change
- * from core (WC 9.4.0) is the guest-block condition below: core only blocks
- * guests when BOTH guest checkout AND account registration are disabled —
- * since this theme keeps registration enabled (needed for the account-required
- * login modal's "Create Account" panel), core's own condition would never
- * trigger and guests would reach the billing form anyway. This theme requires
- * an account for checkout regardless of the registration setting, so the
- * `! $checkout->is_registration_enabled()` clause is dropped.
- *
- * See inc/wishlist-login-modal.php for the modal this message links to —
- * it auto-opens on this page for guests.
+ * Overrides WooCommerce core's checkout/form-checkout.php. Behavior matches
+ * core exactly (account only required when BOTH guest checkout AND checkout
+ * registration are disabled — this store keeps guest checkout on, so guests
+ * reach the billing form below same as core). The only actual change from
+ * core (WC 9.4.0) is wp_kses_post() instead of esc_html() on the message, so
+ * that IF an account ever does become required, the login-modal reopen link
+ * in inc/wishlist-login-modal.php's woocommerce_checkout_must_be_logged_in_message
+ * filter survives as a real <a>, not escaped-to-text. See
+ * inc/wishlist-login-modal.php for the modal this message links to.
  *
  * @see https://woocommerce.com/document/template-structure/
  * @package WooCommerce\Templates
@@ -25,11 +23,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 do_action( 'woocommerce_before_checkout_form', $checkout );
 
-// Account required to checkout — see file header for how this differs from core.
-// wp_kses_post() (not core's esc_html()) so the login-modal reopen link in
-// inc/wishlist-login-modal.php's woocommerce_checkout_must_be_logged_in_message
-// filter survives as a real <a>, not escaped-to-text.
-if ( $checkout->is_registration_required() && ! is_user_logged_in() ) {
+// If checkout registration is disabled and not logged in, the user cannot checkout.
+if ( ! $checkout->is_registration_enabled() && $checkout->is_registration_required() && ! is_user_logged_in() ) {
 	echo wp_kses_post( apply_filters( 'woocommerce_checkout_must_be_logged_in_message', __( 'You must be logged in to checkout.', 'woocommerce' ) ) );
 	return;
 }

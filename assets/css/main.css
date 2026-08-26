@@ -2655,7 +2655,7 @@ justify-content: space-between;
     position: relative;
     z-index: 1;
     background: var(--color-white);
-    max-width: 900px;
+    max-width: 460px;
     width: 100%;
     max-height: 90vh;
     overflow-y: auto;
@@ -2677,7 +2677,47 @@ justify-content: space-between;
     color: var(--color-gray-600);
     padding: var(--space-24) var(--space-24) 0;
 }
-.wishlist-login-modal .stanray-auth { margin-top: 0; }
+
+/* Tab nav — Sign In / Create Account. Only rendered when registration is
+   open (see stanray_render_wishlist_login_modal), so there's nothing to
+   switch between otherwise. */
+.wishlist-login-modal__tabs {
+    display: flex;
+    margin: var(--space-md) var(--space-24) 0;
+    border-bottom: 1px solid var(--color-gray-200);
+}
+.wishlist-login-modal__tab {
+    flex: 1;
+    padding: var(--space-sm) 0 var(--space-md);
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    font-family: var(--font-body);
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    color: var(--color-gray-400);
+    cursor: pointer;
+    transition: color var(--transition-fast), border-color var(--transition-fast);
+}
+.wishlist-login-modal__tab:hover { color: var(--color-black); }
+.wishlist-login-modal__tab.is-active { color: var(--color-black); border-bottom-color: var(--color-black); }
+
+/* form-login.php's two-column grid is built for the full My Account page;
+   inside the modal it collapses to one column and each panel becomes a tab
+   panel (only one visible at a time), toggled by data-tab-panel/is-active-tab
+   set server-side (see stanray_auth_active_tab()) and by the JS tab click
+   handler in main.js. */
+.wishlist-login-modal .stanray-auth {
+    display: block;
+    margin-top: 0;
+    padding: var(--space-24);
+}
+.wishlist-login-modal .stanray-auth__divider { display: none; }
+.wishlist-login-modal .stanray-auth__panel { display: none; }
+.wishlist-login-modal .stanray-auth__panel.is-active-tab { display: block; }
+
 .wishlist-login-modal .woocommerce-notices-wrapper,
 .wishlist-login-modal .woocommerce-error,
 .wishlist-login-modal .woocommerce-message {

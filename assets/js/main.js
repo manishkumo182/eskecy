@@ -1464,6 +1464,25 @@ document.addEventListener('click', function (e) {
                 if (e.key === 'Escape' && loginModal.classList.contains('is-open')) closeLoginModal(true);
             });
 
+            // Sign In / Create Account tabs. Server-side markup already picks
+            // the right tab active on load (see stanray_auth_active_tab()) —
+            // this just lets the visitor switch between them.
+            var tabs = loginModal.querySelectorAll('.wishlist-login-modal__tab');
+            var panels = loginModal.querySelectorAll('[data-tab-panel]');
+            tabs.forEach(function(tab) {
+                tab.addEventListener('click', function() {
+                    var target = tab.getAttribute('data-tab');
+                    tabs.forEach(function(t) {
+                        var active = t === tab;
+                        t.classList.toggle('is-active', active);
+                        t.setAttribute('aria-selected', active ? 'true' : 'false');
+                    });
+                    panels.forEach(function(panel) {
+                        panel.classList.toggle('is-active-tab', panel.getAttribute('data-tab-panel') === target);
+                    });
+                });
+            });
+
             // Checkout: guest checkout is disabled, so pop the modal open
             // immediately rather than waiting for a click.
             if (loginModal.classList.contains('wishlist-login-modal--autoopen')) {
@@ -2092,5 +2111,48 @@ jQuery(function($) {
     // never shows stale selection/visibility.
     window.addEventListener('pageshow', function(e) {
         if (e.persisted) initPickers();
+    });
+});
+
+// ── CHECKOUT: "Same as billing address" button ──────────────────────────────
+// Button itself is rendered server-side (see the woocommerce_before_checkout_
+// shipping_form hook in inc/woocommerce.php, right above the shipping fields).
+// jQuery (not vanilla DOM events), same reason as the address picker above:
+// core's country-select.js listens for jQuery 'change' on #shipping_country
+// to rebuild the state field, and re-inits select2 on it itself.
+jQuery(function($) {
+    // Fields that exist on both billing and shipping with matching names —
+    // country/state are handled separately below since changing the country
+    // synchronously rebuilds the state field, wiping out anything set on it
+    // first.
+    var SAME_AS_BILLING_FIELDS = [
+        'first_name', 'last_name', 'company',
+        'address_1', 'address_2', 'city', 'postcode', 'phone'
+    ];
+
+    $(document.body).on('click', '.stanray-same-as-billing', function() {
+        var billingCountry = $('#billing_country').val();
+        var billingState   = $('#billing_state').val();
+
+        SAME_AS_BILLING_FIELDS.forEach(function(key) {
+            var $billing  = $('#billing_' + key);
+            var $shipping = $('#shipping_' + key);
+            if ($billing.length && $shipping.length) $shipping.val($billing.val());
+        });
+
+        if (billingCountry) {
+            $('#shipping_country').val(billingCountry).trigger('change');
+        }
+        if (billingState) {
+            // country-select.js rebuilds #shipping_state (and re-inits its
+            // select2) asynchronously off the 'change' event just triggered
+            // above — setting the value before that rebuild finishes would
+            // get overwritten, so wait a tick.
+            setTimeout(function() {
+                $('#shipping_state').val(billingState).trigger('change');
+            }, 100);
+        }
+
+        $(document.body).trigger('update_checkout');
     });
 });
