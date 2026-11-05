@@ -395,6 +395,37 @@ add_action( 'customize_register', function ( WP_Customize_Manager $wp_customize 
         'section' => 'stanray_footer',
         'type'    => 'text',
     ] );
+
+    // Developer credit row (centered, above the copyright bar).
+    $wp_customize->add_setting( 'footer_credit_prefix', [
+        'default'           => 'Developed by',
+        'sanitize_callback' => 'sanitize_text_field',
+    ] );
+    $wp_customize->add_control( 'footer_credit_prefix', [
+        'label'   => __( 'Developer Credit — Text', 'stanray-custom' ),
+        'section' => 'stanray_footer',
+        'type'    => 'text',
+    ] );
+    $wp_customize->add_setting( 'footer_credit_name', [
+        'default'           => 'Kumo Labs',
+        'sanitize_callback' => 'sanitize_text_field',
+    ] );
+    $wp_customize->add_control( 'footer_credit_name', [
+        'label'       => __( 'Developer Credit — Name', 'stanray-custom' ),
+        'description' => __( 'Leave blank to hide the credit row.', 'stanray-custom' ),
+        'section'     => 'stanray_footer',
+        'type'        => 'text',
+    ] );
+    $wp_customize->add_setting( 'footer_credit_url', [
+        'default'           => 'https://kumo-labs.com',
+        'sanitize_callback' => 'esc_url_raw',
+    ] );
+    $wp_customize->add_control( 'footer_credit_url', [
+        'label'       => __( 'Developer Credit — Link', 'stanray-custom' ),
+        'description' => __( 'Leave blank for plain text (no link).', 'stanray-custom' ),
+        'section'     => 'stanray_footer',
+        'type'        => 'url',
+    ] );
 } );
 
 

@@ -11,7 +11,7 @@
             <div>
                 <h4 class="footer-perks__title"><?php echo esc_html( $perk['title'] ?? '' ); ?></h4>
                 <?php if ( ! empty( $perk['desc'] ) ) : ?>
-                <p class="footer-perks__desc"><?php echo esc_html( $perk['desc'] ); ?></p>
+                <p class="footer-perks__desc"><?php echo stanray_fp_desc_html( $perk['desc'] ); ?></p>
                 <?php endif; ?>
             </div>
         </div>
@@ -119,6 +119,22 @@
         </nav>
 
     </div><!-- .footer-inner -->
+
+    <!-- Developer credit -->
+    <?php
+    $credit_prefix = get_theme_mod( 'footer_credit_prefix', 'Developed by' );
+    $credit_name   = get_theme_mod( 'footer_credit_name', 'Kumo Labs' );
+    $credit_url    = get_theme_mod( 'footer_credit_url', 'https://kumo-labs.com' );
+    if ( $credit_name ) : ?>
+    <div class="footer-credit">
+        <?php echo esc_html( $credit_prefix ); ?>
+        <?php if ( $credit_url ) : ?>
+            <a href="<?php echo esc_url( $credit_url ); ?>" target="_blank" rel="noopener"><?php echo esc_html( $credit_name ); ?></a>
+        <?php else : ?>
+            <span><?php echo esc_html( $credit_name ); ?></span>
+        <?php endif; ?>
+    </div>
+    <?php endif; ?>
 
     <!-- Bottom bar -->
     <div class="footer-bottom">

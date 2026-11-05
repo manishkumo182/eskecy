@@ -568,7 +568,7 @@ form.woocommerce-ordering {
     font-family: var(--font-body);
     padding-block: var(--space-sm);
     border-bottom: 1px solid var(--color-gray-200);
-    color: var(--color-black);
+    font-weight: 500;
     letter-spacing: 0.1em;
 }
 
@@ -1347,6 +1347,23 @@ input#wp-block-search__input-1 { padding: var(--space-sm); border-radius: 6px; m
 }
 .footer-col__list li a:hover { color: #fff; }
 
+/* Developer credit (own centered row above the bottom bar) */
+.footer-credit {
+    text-align: center;
+    padding: 1rem 1.5rem;
+    border-top: 1px solid rgba(255,255,255,0.08);
+    font-size: 0.6rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.3);
+}
+.footer-credit a {
+    color: rgba(255,255,255,0.55);
+    text-decoration: none;
+    transition: color 160ms ease;
+}
+.footer-credit a:hover { color: #fff; }
+
 /* Bottom bar */
 .footer-bottom {
     display: flex;
@@ -1418,6 +1435,16 @@ input#wp-block-search__input-1 { padding: var(--space-sm); border-radius: 6px; m
     color: rgba(255,255,255,0.45);
     margin: 0;
 }
+.footer-perks__desc a {
+    color: inherit;
+    text-decoration: none;
+    border-bottom: 1px solid rgba(255,255,255,0.2);
+    transition: color .2s, border-color .2s;
+}
+.footer-perks__desc a:hover {
+    color: var(--color-white);
+    border-color: currentColor;
+}
 
 p.col-title { text-transform: uppercase; padding-bottom: var(--space-sm); font-size: 14px; letter-spacing: 0.2rem;}
 label.wp-block-search__label { text-transform: uppercase; padding-bottom: var(--space-sm); font-size: 14px; letter-spacing: 0.2rem;}
@@ -1427,8 +1454,8 @@ label.wp-block-search__label { text-transform: uppercase; padding-bottom: var(--
     position: fixed;
     bottom: 24px;
     right: 24px;
-    width: 52px;
-    height: 52px;
+    width: 72px;
+    height: 72px;
     background: #25D366;
     border-radius: 50%;
     display: flex;
@@ -4209,12 +4236,13 @@ justify-content: space-between;
     border: 1px solid rgba(0,0,0,0.1);
     box-shadow: 0 2px 18px rgba(0,0,0,0.06);
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
     align-items: center;
     justify-content: center;
-    gap: 5px;
+    gap: 6px;
     text-decoration: none;
     flex-shrink: 0;
+    white-space: nowrap;
     transition: background 280ms ease, border-color 280ms ease;
 }
 
@@ -4227,18 +4255,23 @@ justify-content: space-between;
     font-family: var(--font-inter);
     font-size: 0.56rem;
     font-weight: 700;
-    letter-spacing: 0.2em;
+    letter-spacing: 0.15em;
     text-transform: uppercase;
     color: #111111;
     transition: color 280ms ease;
+    line-height: 1;
+    /* letter-spacing adds a trailing gap after the last letter — cancel it
+       so the gap to the arrow matches and the pair stays centred. */
+    margin-right: -0.15em;
 }
 
 .hb__cta-arrow {
-    font-size: 1.3rem;
+    font-size: 0.95rem;
     color: #111111;
-    transition: color 280ms ease;
+    transition: color 280ms ease, transform 280ms ease;
     line-height: 1;
 }
+.hb__cta:hover .hb__cta-arrow { transform: translateX(2px); }
 
 .hb__cta:hover .hb__cta-label,
 .hb__cta:hover .hb__cta-arrow { color: #ffffff; }
@@ -4340,14 +4373,9 @@ justify-content: space-between;
     }
 
     .hb__stat-num { font-size: 1.4rem; }
-    .hb__cta { width: 70px; height: 70px;
-    .hb__cta-label {
-        font-size:0.48rem;
-    }
-    .hb__cta-arrow{
-        font-size:0.76rem;
-    }
- }
+    .hb__cta { width: 70px; height: 70px; gap: 3px; }
+    .hb__cta-label { font-size: 0.42rem; letter-spacing: 0.08em; margin-right: -0.08em; }
+    .hb__cta-arrow { font-size: 0.7rem; }
 }
 
 /* ── HERO BANNER MOTION ──────────────────────────────────────── */

@@ -1,7 +1,7 @@
 <?php
 /**
  * Dashboard admin page: Footer Perks bar (site-wide strip above the footer —
- * "Free Dispatch / Easy Returns / 24/7 Enquiry / Worldwide Shipping").
+ * "Nationwide Delivery / 48-Hour Exchange / Talk to Us / Cash on Delivery").
  * Lets an editor change the icon, title, and description of each perk, and
  * add or remove perks (up to STANRAY_FP_MAX), from the wp-admin sidebar
  * instead of editing footer.php directly.
@@ -67,16 +67,85 @@ function stanray_fp_icons() {
             'label' => __( 'Chat Bubble (Support)', 'stanray-custom' ),
             'svg'   => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>',
         ],
+        'cash'     => [
+            'label' => __( 'Cash (Cash on Delivery)', 'stanray-custom' ),
+            'svg'   => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="12" rx="2"></rect><circle cx="12" cy="12" r="2.5"></circle><line x1="6" y1="12" x2="6.01" y2="12"></line><line x1="18" y1="12" x2="18.01" y2="12"></line></svg>',
+        ],
     ];
 }
 
 function stanray_fp_default_perks() {
     return [
-        [ 'icon' => 'truck',    'title' => 'Free Dispatch',      'desc' => 'All orders above $200' ],
-        [ 'icon' => 'returns',  'title' => 'Easy Returns',       'desc' => '30-day free returns' ],
-        [ 'icon' => 'question', 'title' => '24/7 Enquiry',       'desc' => 'Live chat & secure tickets' ],
-        [ 'icon' => 'globe',    'title' => 'Worldwide Shipping', 'desc' => 'Delivered to your door' ],
+        [ 'icon' => 'truck',   'title' => 'Nationwide Delivery', 'desc' => 'Pathao delivery across Nepal' ],
+        [ 'icon' => 'returns', 'title' => '48-Hour Exchange',    'desc' => 'For damaged or wrong items' ],
+        [ 'icon' => 'chat',    'title' => 'Talk to Us',          'desc' => 'Chat on WhatsApp or email us' ],
+        [ 'icon' => 'cash',    'title' => 'Cash on Delivery',    'desc' => 'Available in selected locations' ],
     ];
+}
+
+// One-time migration: sites that saved the original placeholder perks
+// ("Free Dispatch", "Easy Returns", …) get the new Nepal-specific defaults.
+// Perks an editor has customised are left untouched.
+function stanray_fp_migrate_defaults() {
+    if ( get_option( 'stanray_fp_defaults_v' ) === '3' ) return;
+
+    $saved = get_option( 'stanray_footer_perks', null );
+    if ( is_array( $saved ) ) {
+        $old_titles   = [ 'Free Dispatch', 'Easy Returns', '24/7 Enquiry', 'Worldwide Shipping' ];
+        $saved_titles = array_map( function ( $p ) { return $p['title'] ?? ''; }, $saved );
+        if ( $saved_titles === $old_titles ) {
+            $saved = stanray_fp_default_perks();
+        }
+        // v2 → v3: shorter "Talk to Us" line (email moved behind a link).
+        foreach ( $saved as &$p ) {
+            if ( ( $p['desc'] ?? '' ) === 'WhatsApp & eskecyofficial@gmail.com' ) {
+                $p['desc'] = 'Chat on WhatsApp or email us';
+            }
+        }
+        unset( $p );
+        update_option( 'stanray_footer_perks', $saved );
+    }
+    update_option( 'stanray_fp_defaults_v', '3' );
+}
+add_action( 'init', 'stanray_fp_migrate_defaults' );
+
+// Contact email used when a perk description mentions "email".
+define( 'STANRAY_FP_EMAIL', 'eskecyofficial@gmail.com' );
+
+// Render a perk description, escaped, with contact words turned into links:
+//  - "WhatsApp"  → wa.me/<Customizer "social_whatsapp" number> (if set)
+//  - "email"     → mailto:STANRAY_FP_EMAIL
+//  - any literal email address → mailto: that address
+function stanray_fp_desc_html( $desc ) {
+    $html = esc_html( $desc );
+
+    // Literal email addresses first, so the "email" word rule can't touch them.
+    if ( preg_match( '/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/', $html ) ) {
+        return preg_replace_callback(
+            '/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/',
+            function ( $m ) {
+                return '<a href="mailto:' . esc_attr( $m[0] ) . '">' . $m[0] . '</a>';
+            },
+            $html
+        );
+    }
+
+    $wa = preg_replace( '/[^0-9]/', '', (string) get_theme_mod( 'social_whatsapp' ) );
+    if ( $wa ) {
+        $html = preg_replace(
+            '/\bWhatsApp\b/',
+            '<a href="' . esc_url( 'https://wa.me/' . $wa ) . '" target="_blank" rel="noopener">WhatsApp</a>',
+            $html,
+            1
+        );
+    }
+    $html = preg_replace(
+        '/\b(email)\b/i',
+        '<a href="' . esc_url( 'mailto:' . STANRAY_FP_EMAIL ) . '">$1</a>',
+        $html,
+        1
+    );
+    return $html;
 }
 
 // Front-end + admin preview both call this to get the saved (or default) perks.
@@ -127,7 +196,7 @@ function stanray_fp_admin_page() {
     ?>
     <div class="wrap">
         <h1><?php esc_html_e( 'Footer Perks Bar', 'stanray-custom' ); ?></h1>
-        <p><?php esc_html_e( 'This controls the strip of guarantees ("Free Dispatch", "Easy Returns", …) shown above the site footer on every page. Pick an icon, a title, and a short description for each perk. Leave a title blank to remove that perk.', 'stanray-custom' ); ?></p>
+        <p><?php esc_html_e( 'This controls the strip of guarantees ("Nationwide Delivery", "48-Hour Exchange", …) shown above the site footer on every page. Pick an icon, a title, and a short description for each perk. Leave a title blank to remove that perk.', 'stanray-custom' ); ?></p>
 
         <?php if ( $saved ) : ?>
             <div class="notice notice-success is-dismissible"><p><?php esc_html_e( 'Saved.', 'stanray-custom' ); ?></p></div>
